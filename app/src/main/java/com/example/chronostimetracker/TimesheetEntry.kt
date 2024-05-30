@@ -1,62 +1,46 @@
 package com.example.chronostimetracker
 
 // Updated version
-import android.app.AlertDialog
-import android.app.DatePickerDialog
-import android.content.Context
-import android.content.Intent
-import android.Manifest
-import android.app.Activity
-import android.content.ContentValues
-import android.content.pm.PackageManager
-import android.content.res.ColorStateList
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
-import android.text.InputFilter
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageButton
 import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
+import android.content.Intent
+import android.widget.*
+import androidx.appcompat.app.AlertDialog
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import java.util.*
+
 class TimesheetEntry : AppCompatActivity() {
 
     private lateinit var startDatePicker: DatePicker
     private lateinit var endDatePicker: DatePicker
     private lateinit var startTimePicker: TimePickerHandler
-    private lateinit var EndTimePicker : TimePickerHandler
+    private lateinit var EndTimePicker: TimePickerHandler
     private lateinit var minHours: EditText
     private lateinit var maxHours: EditText
     private lateinit var etProjectName: EditText
     private lateinit var etCategory: EditText
     private lateinit var etDescription: EditText
-    private lateinit var imgUserImage : ImageView
-    private lateinit var btnPickImg :Button
+    private lateinit var imgUserImage: ImageView
+    private lateinit var btnPickImg: Button
     private var uniqueId: Int = -1 // Initialize uniqueId with a default value
     private lateinit var camera: Camera
 
+    // Firebase database reference
+    private lateinit var database: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,9 +52,12 @@ class TimesheetEntry : AppCompatActivity() {
             insets
         }
 
+        // Initialize Firebase
+        database = FirebaseDatabase.getInstance().reference
+
         // Create button
         val btnCreate: Button = findViewById(R.id.btnCreate)
-        //Start and end time buttons
+        // Start and end time buttons
         val startTimeButton: Button = findViewById(R.id.btnStartTime)
         val endTimeButton: Button = findViewById(R.id.btnEndTime)
         // Start and End date buttons
@@ -89,7 +76,7 @@ class TimesheetEntry : AppCompatActivity() {
         startDatePicker = DatePicker(this, startDateButton)
         endDatePicker = DatePicker(this, endDateButton)
 
-        //Min and Max hours
+        // Min and Max hours
         maxHours = findViewById(R.id.etMax)
         minHours = findViewById(R.id.etMin)
 
@@ -107,13 +94,13 @@ class TimesheetEntry : AppCompatActivity() {
             // Validate start and end times
             startTimePicker.validateStartEndTime(startTime, endTime)
 
-// Validate minHours and maxHours before proceeding
+            // Validate minHours and maxHours before proceeding
             if (hoursValidator.validateMinMaxHours(
                     minHours.text.toString(),
-                    maxHours.text.toString()))
-            {
-                // SaveCategory()
-                saveDataToSharedPreferences()
+                    maxHours.text.toString()
+                )) {
+                SaveCategory()
+                saveDataToFirebase()
                 // Start TimesheetEntryDisplayActivity and pass the unique ID
                 val intent = Intent(this, ListOfEntries::class.java)
                 intent.putExtra("uniqueId", uniqueId)
@@ -128,7 +115,6 @@ class TimesheetEntry : AppCompatActivity() {
         btnPickImg.setOnClickListener {
             //camera.openCamera(imgUserImage)
             camera.showImagePickerOptions(imgUserImage)
-
         }
 
         imgUserImage.setOnClickListener {
@@ -148,7 +134,6 @@ class TimesheetEntry : AppCompatActivity() {
                 dialog.show()
             }
         }
-
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -160,82 +145,84 @@ class TimesheetEntry : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         camera.handleActivityResult(requestCode, resultCode, data)
     }
-    private fun SaveProjectName(){
+    private fun SaveCategory() {
+        val categoryText = etCategory.text.toString()
 
-    }
-
-    private fun SaveCategory(){
-        // Save the category to its own SharedPreferences with a unique key
-        val categorySharedPreferences = getSharedPreferences("CategoryData", Context.MODE_PRIVATE)
-        val categoryEditor = categorySharedPreferences.edit()
-        // Generate a unique key for the category
-        val uniqueCategoryKey = "category_$uniqueId"
-        categoryEditor.putString(uniqueCategoryKey, etCategory.text.toString())
-        categoryEditor.apply()
-
-
-        // Log all saved categories
-        val allCategories = categorySharedPreferences.all
-        for ((key, value) in allCategories) {
-            Log.d("TimesheetEntry", "Category saved: $key = $value")
-
+        // Validate the category input
+        if (categoryText.isEmpty()) {
+            Toast.makeText(this, "Category cannot be empty", Toast.LENGTH_SHORT).show()
+            return
         }
 
+        // Initialize Firebase database reference
+        val database = FirebaseDatabase.getInstance()
+        val categoryRef = database.getReference("CategoryData")
+
+        // Generate a unique key for the category
+        val uniqueCategoryKey = categoryRef.push().key ?: return
+
+        // Save the category to Firebase
+        categoryRef.child(uniqueCategoryKey).setValue(categoryText).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Toast.makeText(this, "Category saved successfully", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Failed to save category", Toast.LENGTH_SHORT).show()
+                Log.e("FirebaseError", "Error saving category: ${task.exception?.message}")
+            }
+        }
     }
 
-    private fun saveDataToSharedPreferences() {
-        val sharedPreferences = getSharedPreferences("Projects", Context.MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
+    private fun saveDataToFirebase() {
+        val uniqueKey = database.child("timesheetEntries").push().key ?: return // Ensure uniqueKey is not null
+        uniqueId = uniqueKey.hashCode()
+        val projectName = etProjectName.text.toString()
+        val category = etCategory.text.toString()
+        val description = etDescription.text.toString()
+        val startTime = startTimePicker.getTime()
+        val startDate = startDatePicker.getDate()
+        val endTime = EndTimePicker.getTime()
+        val endDate = endDatePicker.getDate()
+        val minHoursValue = minHours.text.toString().toInt()
+        val maxHoursValue = maxHours.text.toString().toInt()
 
-        // Retrieve and increment the counter
-        uniqueId = sharedPreferences.getInt("lastProjectId", 0) + 1
-        editor.putInt("lastProjectId", uniqueId)
-        SaveCategory()
-
-        // Save the creation date and time
         val creationTime = System.currentTimeMillis()
         val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
         val formattedDate = sdf.format(Date(creationTime))
 
-        val timesheetSharedPreferences = getSharedPreferences("TimesheetData", Context.MODE_PRIVATE)
-        val timesheetEditor = timesheetSharedPreferences.edit()
-        // Convert the ImageView image to a Bitmap
-        val bitmap = (imgUserImage.drawable as BitmapDrawable).bitmap
 
-        // Convert the Bitmap to a Base64 string
+        val bitmap = (imgUserImage.drawable as BitmapDrawable).bitmap
         val encodedImage = camera.encodeImage(bitmap)
 
-        // Use the unique ID to create a unique key for each entry
-        timesheetEditor.putString("projectName_$uniqueId", etProjectName.text.toString())
-        timesheetEditor.putString("category_$uniqueId", etCategory.text.toString())
-        timesheetEditor.putString("description_$uniqueId", etDescription.text.toString())
-        timesheetEditor.putString("startTime_$uniqueId", startTimePicker.getTime())
-        timesheetEditor.putString("startDate_$uniqueId", startDatePicker.getDate())
-        timesheetEditor.putString("endTime_$uniqueId", EndTimePicker.getTime())
-        timesheetEditor.putString("endDate_$uniqueId", endDatePicker.getDate())
-        timesheetEditor.putInt("minHours_$uniqueId", minHours.text.toString().toInt())
-        timesheetEditor.putInt("maxHours_$uniqueId", maxHours.text.toString().toInt())
-        timesheetEditor.putString("Image_$uniqueId", encodedImage)
-        timesheetEditor.putLong("creationTime_$uniqueId", creationTime)
-        timesheetEditor.apply()
-        editor.apply()
+            val entry = TimesheetData(
+                uniqueKey, projectName, category, description, startTime, startDate,
+                endTime, endDate, minHoursValue, maxHoursValue, encodedImage, creationTime
+            )
 
-        // Log all the data being saved
-        Log.d("TimesheetEntry", "Saving project name to SharedPreferences with ID: $uniqueId")
-        Log.d("TimesheetEntry", "Saving data to SharedPreferences with ID: $uniqueId")
-        Log.d("TimesheetEntry", "Project Name: " + etProjectName.text.toString())
-        Log.d("TimesheetEntry", "Category: " + etCategory.text.toString())
-        Log.d("TimesheetEntry", "Description: " + etDescription.text.toString())
-        Log.d("TimesheetEntry", "Start Time: " + startTimePicker.getTime())
-        Log.d("TimesheetEntry", "Start Date: " + startDatePicker.getDate())
-        Log.d("TimesheetEntry", "End Time: " + EndTimePicker.getTime())
-        Log.d("TimesheetEntry", "End Date: " + endDatePicker.getDate())
-        Log.d("TimesheetEntry", "Min Hours: " + minHours.text.toString())
-        Log.d("TimesheetEntry", "Max Hours: " + maxHours.text.toString())
-        Log.d("TimesheetEntry", "Saving imgUserImage to SharedPreferences with ID: $uniqueId")
-        Log.d("TimesheetEntry", "Creation Date and Time: $formattedDate")
-        Log.d("TimesheetEntry", "Data saved successfully")
+            database.child("timesheetEntries").child(uniqueKey).setValue(entry)
+                .addOnCompleteListener(OnCompleteListener<Void> { task ->
+                    if (task.isSuccessful) {
+                        Log.d("TimesheetEntry", "Data saved successfully")
+                    } else {
+                        Log.e("TimesheetEntry", "Failed to save data", task.exception)
+                    }
+                })
+
+            Log.d("TimesheetEntry", "Project Name: $projectName")
+            Log.d("TimesheetEntry", "Category: $category")
+            Log.d("TimesheetEntry", "Description: $description")
+            Log.d("TimesheetEntry", "Start Time: $startTime")
+            Log.d("TimesheetEntry", "Start Date: $startDate")
+            Log.d("TimesheetEntry", "End Time: $endTime")
+            Log.d("TimesheetEntry", "End Date: $endDate")
+            Log.d("TimesheetEntry", "Min Hours: $minHoursValue")
+            Log.d("TimesheetEntry", "Max Hours: $maxHoursValue")
+            Log.d("TimesheetEntry", "Image: $encodedImage")
+            Log.d("TimesheetEntry", "Creation Time: $formattedDate")
+
     }
+
+
+
 
     private fun getCurrentDate(): String {
         val calendar = Calendar.getInstance()
@@ -247,11 +234,12 @@ class TimesheetEntry : AppCompatActivity() {
         val dateFormat = SimpleDateFormat("MM/dd", Locale.getDefault())
         return dateFormat.format(calendar.time)
     }
-    fun openStartTimePicker(view: View){
+
+    fun openStartTimePicker(view: View) {
         startTimePicker.showTimePickerDialog()
     }
 
-    fun openEndTimePicker(view: View){
+    fun openEndTimePicker(view: View) {
         EndTimePicker.showTimePickerDialog()
     }
 

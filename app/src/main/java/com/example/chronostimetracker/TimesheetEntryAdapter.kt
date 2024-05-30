@@ -1,3 +1,5 @@
+
+
 package com.example.chronostimetracker
 
 import android.annotation.SuppressLint
@@ -16,6 +18,11 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,7 +38,12 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
     private var timerHandler: Handler? = null // Declare timerHandler
     private var timerRunnable: Runnable? = null // Declare timerRunnable
     private val categoryTotalTime = mutableMapOf<String, Long>()
+    private lateinit var database: DatabaseReference
 
+    init {
+        // Initialize Firebase Database reference
+        database = FirebaseDatabase.getInstance().reference
+    }
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val uniqueIdTextView: TextView = itemView.findViewById(R.id.uniqueIdTextView)
         val projectNameTextView: TextView = itemView.findViewById(R.id.projectNameTextView)
@@ -40,6 +52,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         val timerButton: Button = itemView.findViewById(R.id.timerButton)
         val timerTextView: TextView = itemView.findViewById(R.id.timerTextView)
         val TimesheetDate: TextView = itemView.findViewById(R.id.topTextView)
+
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -55,7 +68,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val entry = entries[position]
-        holder.uniqueIdTextView.text = entry.uniqueId.toString() // Assuming uniqueId is a Long or similar
+        holder.uniqueIdTextView.text = entry.uniqueId // Assuming uniqueId is a Long or similar
         holder.projectNameTextView.text = entry.projectName
         holder.categoryTextView.text = entry.category
 
@@ -64,58 +77,59 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
             val decodedBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
             holder.imageView.setImageBitmap(decodedBitmap)
         } else {
+            holder.imageView.setImageResource(R.drawable.default_image) // Default image if none is present
 
         }
 
-        // Retrieve the saved elapsed time from SharedPreferences
-        val timesheetSharedPreferences = holder.itemView.context.getSharedPreferences("TimesheetData", Context.MODE_PRIVATE)
-        val savedElapsedTime = timesheetSharedPreferences.getLong("elapsedTime_${entry.uniqueId}", 0)
-        Log.d("elapsed", "Saved Elapsed Time for unique ID ${entry.uniqueId}: $savedElapsedTime")
+        // Fetch the elapsed time and creation time from Firebase
+        val databaseRef = database.child("timesheetEntries").child(entry.uniqueId.toString())
+        databaseRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val elapsedTime = dataSnapshot.child("elapsedTime").getValue(Long::class.java) ?: 0
+                val creationTime = dataSnapshot.child("creationTime").getValue(Long::class.java) ?: 0
+
+                // Log the raw creationTime value
+                Log.d("creationTime", "Raw creationTime for unique ID ${entry.uniqueId}: $creationTime")
+
+                // Format the creation date
+                val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
+                val formattedDate = sdf.format(Date(creationTime))
+                holder.TimesheetDate.text = formattedDate
+
+                // Format the elapsed time and set it to timerTextView
+                val formattedTime = formatElapsedTime(elapsedTime)
+                holder.timerTextView.text = formattedTime
+
+                Log.d("elapsedTime", "Fetched Elapsed Time for unique ID ${entry.uniqueId}: $elapsedTime")
+                Log.d("creation", "Formatted Creation Time for unique ID ${entry.uniqueId}: $formattedDate")
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e("TimesheetEntryAdapter", "Failed to read elapsed time or creation time", databaseError.toException())
+            }
+        })
 
 
-        val creationTime = timesheetSharedPreferences.getLong("creationTime_${entry.uniqueId}", 0)
+        // Fetch the total time for the category from Firebase
+        val categoryRef = FirebaseDatabase.getInstance().reference.child("CategoryTimes").child(entry.category)
+        categoryRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val totalTime = dataSnapshot.child("totalTime").getValue(Long::class.java) ?: 0
+                Log.d("totalCategory", "Total Time for category ${entry.category}: $totalTime")
+            }
 
-        // Format the creation date
-        val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
-        val formattedDate = sdf.format(Date(creationTime))
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e("TimesheetEntryAdapter", "Failed to read total time for category", databaseError.toException())
+            }
+        })
 
-        holder.TimesheetDate.text = formattedDate
-
-        // Format the elapsed time and set it to timerTextView
-        val formattedTime = formatElapsedTime(savedElapsedTime)
-        holder.timerTextView.text = formattedTime
-
-
-        // Retrieve the total time for the category from CategoryTimes SharedPreferences
-        val category = entries[position].category
-        val categoryTimesSharedPreferences = holder.itemView.context.getSharedPreferences("CategoryTimes", Context.MODE_PRIVATE)
-        val totalTime = categoryTimesSharedPreferences.getLong("totalTime_$category", 0)
-        Log.d("test", "Total Time for category $category: $totalTime")
-
-        Log.d("TimesheetEntryAdapter", "Elapsed time for Category ${entry.category}: $formattedTime")
-        Log.d("total", "Total Time for category $category: $totalTime")
         holder.timerButton.setOnClickListener {
-            val uniqueId: Long = entry.uniqueId // Use the actual uniqueId for the timesheet entry
+            val uniqueId: String? = entry.uniqueId
             showTimerDialog(holder.itemView.context, uniqueId, position)
         }
     }
 
-    private fun startTimer(position: Int) {
-        timerHandler = Handler(Looper.getMainLooper())
-        timerRunnable = object : Runnable {
-            override fun run() {
-                val elapsedTime = System.currentTimeMillis() - timerStartTimes[position]!!
-                // Update the data model with the elapsed time
-                entries[position].elapsedTime = elapsedTime
-                // Notify the adapter that the data has changed
-                notifyItemChanged(position)
-                timerHandler?.postDelayed(this, 1000)
-            }
-        }
-        timerHandler?.post(timerRunnable!!)
-    }
-
-    fun showTimerDialog(context: Context, uniqueId: Long, position: Int) {
+    fun showTimerDialog(context: Context, uniqueId: String?, position: Int) {
         val dialog = Dialog(context)
         dialog.setContentView(R.layout.dialog_timer)
 
@@ -142,44 +156,84 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         stopButton.setOnClickListener {
             isTimerRunning = false // Stop the timer
 
-            // Calculate the elapsed time and update the timerTextView
+            // Calculate the elapsed time
             val elapsedTime = System.currentTimeMillis() - startTime
+
+            // Set the formatted time based on the new total elapsed time
             val formattedTime = formatElapsedTime(elapsedTime)
+
+            // Set the text of timerTextView with the formatted time
             timerTextView.text = formattedTime
 
-            // Retrieve the existing elapsed time for the timesheet entry
-            val timesheetSharedPreferences = context.getSharedPreferences("TimesheetData", Context.MODE_PRIVATE)
-            val existingElapsedTime = timesheetSharedPreferences.getLong("elapsedTime_$uniqueId", 0)
+            // Update the elapsed time for the timesheet entry in Firebase
+            val database = FirebaseDatabase.getInstance().reference
+            val timesheetEntryRef = database.child("timesheetEntries").child(uniqueId.toString())
 
-            // Add the newly tracked elapsed time to the existing time
-            val newTotalElapsedTime = existingElapsedTime + elapsedTime
+            timesheetEntryRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val existingElapsedTime = dataSnapshot.child("elapsedTime").getValue(Long::class.java) ?: 0
+                    val newTotalElapsedTime = existingElapsedTime + elapsedTime
 
-            // Update the SharedPreferences with the new total elapsed time
-            val timesheetEditor = timesheetSharedPreferences.edit()
-            timesheetEditor.putLong("elapsedTime_$uniqueId", newTotalElapsedTime)
-            timesheetEditor.apply()
+                    // Update the elapsed time in Firebase
+                    timesheetEntryRef.child("elapsedTime").setValue(newTotalElapsedTime)
+                        .addOnSuccessListener {
+                            Log.d("Firebase", "Successfully updated elapsedTime for uniqueId $uniqueId")
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("Firebase", "Failed to update elapsedTime for uniqueId $uniqueId", e)
+                        }
+                }
 
-            // Update the total time for the category
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve elapsedTime for uniqueId $uniqueId", databaseError.toException())
+                }
+            })
+
+            // Update the total time for the category in Firebase
             val category = entries[position].category
-            val currentTotalTime = categoryTotalTime[category] ?: 0
-            categoryTotalTime[category] = currentTotalTime + elapsedTime
+            val categoryRef = database.child("CategoryTimes").child(category)
+            categoryRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val currentTotalTime = dataSnapshot.child("totalTime").getValue(Long::class.java) ?: 0
+                    val newCategoryTotalTime = currentTotalTime + elapsedTime
+                    categoryRef.child("totalTime").setValue(newCategoryTotalTime)
+                        .addOnSuccessListener {
+                            Log.d("Firebase", "Successfully updated totalTime for category $category")
+                            // Save the category total times
+                            saveCategoryTotalTimes(context)
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("Firebase", "Failed to update totalTime for category $category", e)
+                        }
+                }
 
-            // Save the total time for the category
-            saveCategoryTotalTimes(context)
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve totalTime for category $category", databaseError.toException())
+                }
+            })
 
             // Close the dialog
             dialog.dismiss()
         }
 
+
         // Set a listener to be called when the dialog is dismissed
         dialog.setOnDismissListener {
             // Update the timerTextView in the ViewHolder
             val entry = entries[position]
-            val timesheetSharedPreferences = context.getSharedPreferences("TimesheetData", Context.MODE_PRIVATE)
-            val savedElapsedTime = timesheetSharedPreferences.getLong("elapsedTime_${entry.category}", 0)
-            Log.d("YourTag", "Saved Elapsed Time for category ${entry.category}: $savedElapsedTime")
-            val formattedTime = formatElapsedTime(savedElapsedTime)
-            notifyItemChanged(position, formattedTime)
+            val database = FirebaseDatabase.getInstance().reference
+            val timesheetEntryRef = database.child("timesheetEntries").child(entry.uniqueId.toString())
+            timesheetEntryRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val savedElapsedTime = dataSnapshot.child("elapsedTime").getValue(Long::class.java) ?: 0
+                    Log.d("YourTag", "Saved Elapsed Time for unique ID ${entry.uniqueId}: $savedElapsedTime")
+                    val formattedTime = formatElapsedTime(savedElapsedTime)
+                    notifyItemChanged(position, formattedTime)
+                }
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("YourTag", "Failed to retrieve elapsedTime for unique ID ${entry.uniqueId}", databaseError.toException())
+                }
+            })
         }
 
         dialog.show()
@@ -191,20 +245,27 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         window?.attributes = layoutParams
     }
 
-    private fun saveCategoryTotalTimes(context: Context) {
-        // Ensure the CategoryTimes file exists
-        ensureCategoryTimesFileExists(context)
 
-        val categorySharedPreferences = context.getSharedPreferences("CategoryTimes", Context.MODE_PRIVATE)
-        val editor = categorySharedPreferences.edit()
+
+    private fun saveCategoryTotalTimes(context: Context) {
+        // Initialize Firebase Database reference
+         database = FirebaseDatabase.getInstance().reference
+
         categoryTotalTime.forEach { (category, totalTime) ->
-            // Generate a unique key for each category
-            val uniqueCategoryKey = "totalTime_$category"
-            editor.putLong(uniqueCategoryKey, totalTime)
-            Log.d("CategoryData", "Saving value for key $uniqueCategoryKey: $totalTime")
+            // Create a reference for the specific category
+            val categoryRef = database.child("CategoryTimes").child(category)
+
+            // Save the total time to Firebase
+            categoryRef.child("totalTime").setValue(totalTime)
+                .addOnSuccessListener {
+                    Log.d("CategoryData", "Successfully saved totalTime for category $category: $totalTime")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("CategoryData", "Failed to save totalTime for category $category", e)
+                }
         }
-        editor.apply()
     }
+
 
     private fun ensureCategoryTimesFileExists(context: Context) {
         val sharedPreferences = context.getSharedPreferences("CategoryTimes", Context.MODE_PRIVATE)
@@ -219,5 +280,3 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
 
     override fun getItemCount() = entries.size
 }
-
-
