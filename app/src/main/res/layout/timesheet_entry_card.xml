@@ -92,14 +92,14 @@
                 android:id="@+id/timerButton"
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
                 android:background="@drawable/play_yellow"
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp"
-                app:layout_constraintStart_toEndOf="@+id/userImage"
-                app:layout_constraintTop_toBottomOf="@+id/CategoryTextView" />
-
+                app:layout_constraintBottom_toTopOf="@+id/uniqueIdTextView"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.085" />
 
             <TextView
                 android:id="@+id/uniqueIdTextView"
