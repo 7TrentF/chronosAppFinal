@@ -112,22 +112,45 @@ class Report : AppCompatActivity() {
                         // Format the time as a string in HH:mm:ss format
                         val formattedTime = String.format("%02d:%02d:%02d", hours, minutes, seconds)
 
+
+// Header TextView for "Time spent on each category"
+                        val headerTextView = TextView(this@Report).apply {
+                            text = "Time spent on each category"
+                            setTextColor(Color.WHITE) // Set the text color to white
+                            textSize = 18f // Set the text size larger for emphasis
+                            setTypeface(typeface, Typeface.BOLD) // Make the text bold for emphasis
+
+                            layoutParams = FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.WRAP_CONTENT
+                            ).apply {
+
+                                topPadding = 5 // Start with a bit of padding from the top
+                                // No need for horizontal padding here since it's a single line header
+                            }
+                        }
+
+
                         // Create a TextView for the category and its total time
                         val textView = TextView(this@Report).apply {
                             // Combine category name and formatted time with a space in between
                             text =
-                                "$category $formattedTime" // Display category name followed by the formatted time
+                                "Category: $category $formattedTime" // Display category name followed by the formatted time
                             setTextColor(Color.WHITE) // Set the text color to white
                             textSize = 16f // Set the text size
+
                             layoutParams = FrameLayout.LayoutParams(
                                 ViewGroup.LayoutParams.MATCH_PARENT,
                                 ViewGroup.LayoutParams.WRAP_CONTENT
                             ).apply {
                                 marginStart = 30 // Add some margin to the start
                                 topPadding = topPadding // Use the dynamic top padding
+                                // Add horizontal padding
+                                setMargins(marginStart, topPadding, 30, 0) // Left, top, right, bottom
                             }
                         }
                         textView.setPadding(0, topPadding, 0, 0) // Apply padding to the top
+
                         categoryContainer.addView(textView)
                         topPadding += 40 // Increase the top padding for the next TextView
                     }
@@ -138,7 +161,10 @@ class Report : AppCompatActivity() {
                         resources.getColor(R.color.blue),
                         resources.getColor(R.color.yellow),
                         resources.getColor(R.color.red),
-                        resources.getColor(R.color.purple_200)
+                        resources.getColor(R.color.lightGreen),
+                        resources.getColor(R.color.purple_200),
+                        resources.getColor(R.color.veryLightYellow)
+
 
                     )
                     var colorIndex = predefinedColors.size

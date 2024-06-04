@@ -17,6 +17,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
@@ -130,7 +131,8 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         }
 
         holder.timerButton.setOnClickListener {
-            val uniqueId: String? = entry.uniqueId
+           // val uniqueId: String? = entry.uniqueId
+            entry.uniqueId
             showTimerDialog(holder.itemView.context, entry, position)
         }
 
@@ -144,10 +146,10 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
     private fun showBottomSheetDialog(context: Context, entry: TimesheetData) {
 
         val dialog = BottomSheetDialog(context)
-        val view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_timesheet, null)
+        val view = LayoutInflater.from(context).inflate(R.layout.activity_timesheet_entry_edit, null)
 
-        val projectNameTextView: TextView = view.findViewById(R.id.tvProjectName)
-        val categoryTextView: TextView = view.findViewById(R.id.tvCategory)
+        val projectNameEditText: TextView = view.findViewById(R.id.etProjectName)
+        val categoryEditText: TextView = view.findViewById(R.id.etCategory)
         val startTimeTextView: TextView = view.findViewById(R.id.tvStartTime)
         val endTimeTextView: TextView = view.findViewById(R.id.tvEndTime)
         val startDateTextView: TextView = view.findViewById(R.id.tvStartDate)
@@ -157,8 +159,8 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         val maxTimeTextView: TextView = view.findViewById(R.id.tvMaxTime)
         val userImageView: ImageView = view.findViewById(R.id.userImage)
 
-        projectNameTextView.text = entry.projectName
-        categoryTextView.text = entry.category
+        projectNameEditText.text = entry.projectName
+        categoryEditText.text = entry.category
         descriptionTextView.text = entry.description
         startTimeTextView.text = entry.startTime
         endTimeTextView.text = entry.endTime
@@ -173,39 +175,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
             userImageView.setImageBitmap(decodedBitmap)
         } else {
             userImageView.setImageResource(R.drawable.default_image)
-        }
-
-
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        currentUser?.let { user ->
-            val database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
-            val databaseRef = database.child("Timesheet Entries").child(entry.uniqueId.toString())
-
-            databaseRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    // Assuming 'elapsedTime' is stored as a Long
-                    val elapsedTime = dataSnapshot.child("elapsedTime").getValue(Long::class.java) ?: 0
-
-                    // Retrieve other details if needed
-                    val startTime = dataSnapshot.child("startTime").getValue(String::class.java)
-                    val endTime = dataSnapshot.child("endTime").getValue(String::class.java)
-                    val startDate = dataSnapshot.child("startDate").getValue(String::class.java)
-                    val endDate = dataSnapshot.child("endDate").getValue(String::class.java)
-
-
-                    startTimeTextView.text = startTime
-                    endTimeTextView.text = endTime
-                    startDateTextView.text = startDate
-                    endDateTextView.text = endDate
-
-                    // Now you can use the elapsedTime value as needed
-                    Log.d("Firebase", "Elapsed Time: $elapsedTime")
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve data for uniqueId ${entry.uniqueId}", databaseError.toException())
-                }
-            })
         }
 
         dialog.setContentView(view)

@@ -32,6 +32,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
+
                 android:textSize="20sp" />
 
         </androidx.appcompat.widget.Toolbar>
@@ -57,18 +58,50 @@
             app:layout_constraintTop_toTopOf="parent" />
 
 
-        <FrameLayout
-            android:id="@+id/category_container"
-            android:layout_width="410dp"
-            android:layout_height="166dp"
-            android:paddingLeft="100dp"
-            android:paddingTop="50dp"
-            app:layout_constraintBottom_toTopOf="@+id/pie_chart_container"
+        <ScrollView
+            android:id="@+id/scrollView"
+            android:layout_width="381dp"
+            android:layout_height="484dp"
+            android:overScrollMode="never"
+            android:paddingTop="15dp"
+            android:scrollbars="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintHorizontal_bias="0.444"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/my_toolbar"
-            app:layout_constraintVertical_bias="1.0" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.638">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/category_container"
+                    android:layout_width="387dp"
+                    android:layout_height="159dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="@color/maire"
+                    app:cardCornerRadius="10dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent">
+
+
+                </androidx.cardview.widget.CardView>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        </ScrollView>
+
+
+
+
+
+
 
         <FrameLayout
             android:id="@+id/pie_chart_container"
@@ -95,18 +128,7 @@
             android:orientation="horizontal"
             app:layout_constraintGuide_begin="353dp" />
 
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:text="Time spent on each Category:"
-            android:textColor="@color/white"
-            android:textSize="25dp"
-            app:layout_constraintBottom_toTopOf="@+id/category_container"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.006"
-            app:layout_constraintStart_toStartOf="parent" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

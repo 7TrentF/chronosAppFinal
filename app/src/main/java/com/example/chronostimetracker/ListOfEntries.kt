@@ -52,6 +52,7 @@ class ListOfEntries : AppCompatActivity() {
     private var isTimerRunning = false
     private lateinit var currentUser: FirebaseUser
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -213,30 +214,38 @@ class ListOfEntries : AppCompatActivity() {
                 id: Long
             ) {
                 val selectedOption = parent.getItemAtPosition(position).toString()
-                if (selectedOption == "Filter by Categories") {
-                    showCategorySelectionDialog()
-                } else if (selectedOption == "Filter by Date Range") {
-                    // If "Filter by Date Range" is selected, show two DatePickerDialogs
-                    val calendar = Calendar.getInstance()
-                    val year = calendar.get(Calendar.YEAR)
-                    val month = calendar.get(Calendar.MONTH)
-                    val day = calendar.get(Calendar.DAY_OF_MONTH)
+                when (selectedOption) {
+                    "Filter by Categories" -> {
+                        showCategorySelectionDialog()
+                    }
+                    "Filter by Date Range" -> {
 
-                    // Show the first DatePickerDialog for the start date
-                    DatePickerDialog(this@ListOfEntries, { _, year, monthOfYear, dayOfMonth ->
-                        // Store the selected start date
-                        val startDate = "$dayOfMonth/${monthOfYear + 1}/$year"
+                        // If "Filter by Date Range" is selected, show two DatePickerDialogs
 
-                        // Show the second DatePickerDialog for the end date
+                        val calendar = Calendar.getInstance()
+                        val year = calendar.get(Calendar.YEAR)
+                        val month = calendar.get(Calendar.MONTH)
+                        val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+                        // Show the first DatePickerDialog for the start date
                         DatePickerDialog(this@ListOfEntries, { _, year, monthOfYear, dayOfMonth ->
-                            // Handle the end date selected by the user
-                            val endDate = "$dayOfMonth/${monthOfYear + 1}/$year"
-                            filterEntriesByDate(startDate, endDate)
+                            // Store the selected start date
+                            val startDate = "$dayOfMonth/${monthOfYear + 1}/$year"
+
+                            // Show the second DatePickerDialog for the end date
+                            DatePickerDialog(this@ListOfEntries, { _, year, monthOfYear, dayOfMonth ->
+                                // Handle the end date selected by the user
+                                val endDate = "$dayOfMonth/${monthOfYear + 1}/$year"
+                                filterEntriesByDate(startDate, endDate)
+                            }, year, month, day).show()
+
                         }, year, month, day).show()
-                    }, year, month, day).show()
-                } else if (selectedOption == "None") {
-                    // Clear all filters and update the UI
-                    adapter.updateData(entries)
+
+                    }
+                    "None" -> {
+                        // Clear all filters and update the UI
+                        adapter.updateData(entries)
+                    }
                 }
             }
 
@@ -244,16 +253,6 @@ class ListOfEntries : AppCompatActivity() {
             }
         }
 
-        // Retrieve all saved dates from Firebase
-        timesheetRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val dateValues = mutableListOf<String>()
-                for (entrySnapshot in dataSnapshot.children) {
-                    val startDate = entrySnapshot.child("startDate").getValue(String::class.java)
-                    val endDate = entrySnapshot.child("endDate").getValue(String::class.java)
-                    startDate?.let { dateValues.add(it) }
-                    endDate?.let { dateValues.add(it) }
-                }
 
                 // Retrieve all saved categories from Firebase
                 categoryRef.addListenerForSingleValueEvent(object : ValueEventListener {
@@ -275,34 +274,17 @@ class ListOfEntries : AppCompatActivity() {
                         spinnerArrayAdapter.notifyDataSetChanged()
                     }
 
-                    override fun onCancelled(databaseError: DatabaseError) {
-                        Log.e(
-                            "Firebase",
-                            "Failed to retrieve category names",
-                            databaseError.toException()
-                        )
-                    }
+                        override fun onCancelled(databaseError: DatabaseError) {
+                            Log.e(
+                                "Firebase",
+                                "Failed to retrieve category names",
+                                databaseError.toException()
+                            )
+                        }
+
                 })
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.e("Firebase", "Failed to retrieve timesheet data", databaseError.toException())
-            }
-        })
-    }
-    }
-
-
-    private fun clearAllFiltersAndUpdateUI() {
-
-    adapter.updateData(entries)
-
-
-
         }
-
-
-
+        }
 
 
     private fun showCategorySelectionDialog() {
@@ -346,6 +328,9 @@ class ListOfEntries : AppCompatActivity() {
     }
 
 
+
+
+
     private fun filterEntriesByCategory(selectedCategory: String?) {
         val filteredEntries = if (selectedCategory.isNullOrEmpty()) {
             entries // Display all entries if no category is selected
@@ -355,6 +340,45 @@ class ListOfEntries : AppCompatActivity() {
         adapter.updateData(filteredEntries)
     }
 
+
+    // Function to filter entries by date
+    private fun filterEntriesByDate(startDate: String, endDate: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            val database = FirebaseDatabase.getInstance().reference
+            // Assuming 'user' contains the UID of the current user
+            val userEntriesRef = database.child("user_entries").child(user.uid).child("Timesheet Entries")
+
+            userEntriesRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val filteredEntries = mutableListOf<TimesheetData>()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                    val startDateObj = sdf.parse(startDate)
+                    val endDateObj = sdf.parse(endDate)
+
+                    for (entrySnapshot in dataSnapshot.children) {
+                        val entry = entrySnapshot.getValue(TimesheetData::class.java)
+                        if (entry?.creationTime!= null) {
+                            val creationDate = Date(entry.creationTime)
+                            if (creationDate in startDateObj..endDateObj) {
+                                filteredEntries.add(entry)
+                            }
+                        }
+                    }
+                    adapter.updateData(filteredEntries)
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve timesheet data", databaseError.toException())
+                }
+            })
+        }
+    }
+
+
+
+
+
     private fun parseCreationTime(creationTime: Long): Date? {
         return try {
             Date(creationTime)
@@ -363,15 +387,17 @@ class ListOfEntries : AppCompatActivity() {
         }
     }
 
+    // Function to parse date
     private fun parseDate(dateString: String): Date? {
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         return try {
             dateFormat.parse(dateString)
         } catch (e: ParseException) {
-            null // Return null if the date string cannot be parsed
+            null
         }
     }
 
+    /*
     private fun filterEntriesByDate(startDate: String, endDate: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->
@@ -381,25 +407,17 @@ class ListOfEntries : AppCompatActivity() {
             timesheetRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     val filteredEntries = mutableListOf<TimesheetData>()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                    val startDateObj = sdf.parse(startDate)
+                    val endDateObj = sdf.parse(endDate)
 
                     for (entrySnapshot in dataSnapshot.children) {
                         val entry = entrySnapshot.getValue(TimesheetData::class.java)
 
                         // Ensure entry is not null and creation time is available
                         if (entry != null && entry.creationTime != null) {
-                            val creationTime = entry.creationTime
-
-                            // Convert creation time to Date object
-                            val creationDate = Date(creationTime)
-
-                            // Parse start and end date strings to Date objects
-                            val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
-                            val startDateObj = sdf.parse(startDate)
-                            val endDateObj = sdf.parse(endDate)
-
-                            // Check if the creation date falls within the selected range
+                            val creationDate = Date(entry.creationTime)
                             if (creationDate in startDateObj..endDateObj) {
-                                // Entry falls within the selected date range, add it to filtered list
                                 filteredEntries.add(entry)
                             }
                         }
@@ -417,7 +435,7 @@ class ListOfEntries : AppCompatActivity() {
             })
         }
     }
-
+*/
 
 
 

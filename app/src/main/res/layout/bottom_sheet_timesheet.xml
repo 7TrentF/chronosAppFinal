@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-android:background="@color/maire"
+    android:background="@color/maire"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -30,7 +30,7 @@ android:background="@color/maire"
             app:layout_constraintStart_toEndOf="@+id/tvProjectName">
 
 
-            <TextView
+            <EditText
                 android:id="@+id/tvProjectName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -44,7 +44,7 @@ android:background="@color/maire"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <EditText
+            <TextView
                 android:id="@+id/etProjectName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -55,12 +55,12 @@ android:background="@color/maire"
                 app:layout_constraintStart_toStartOf="@+id/etCategory"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
+            <EditText
                 android:id="@+id/tvCategory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:layout_marginEnd="64dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="56dp"
                 android:text="@string/category"
                 android:textColor="#FDB813"
                 android:textSize="18sp"
@@ -68,10 +68,11 @@ android:background="@color/maire"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvProjectName" />
 
-            <EditText
+            <TextView
                 android:id="@+id/etCategory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="44dp"
                 android:text="@string/category"
                 android:textColor="#FDB813"
                 android:textSize="18sp"
@@ -145,9 +146,11 @@ android:background="@color/maire"
                 android:backgroundTint="@color/maire"
                 android:textColor="@color/yellow"
                 android:textSize="16sp"
-
+                android:onClick="openStartTimePicker"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvStart" />
+
+
 
             <TextView
                 android:id="@+id/tvEndTime"
@@ -156,6 +159,7 @@ android:background="@color/maire"
                 android:layout_marginStart="24dp"
                 android:background="@drawable/edit_text_background"
                 android:text="@string/end_time"
+                android:onClick="openEndTimePicker"
                 android:backgroundTint="@color/maire"
                 android:textColor="@color/yellow"
                 android:textSize="16sp"
@@ -169,6 +173,7 @@ android:background="@color/maire"
                 android:layout_marginStart="4dp"
                 android:background="@drawable/edit_text_background"
                 android:text="@string/start_date"
+                android:onClick="openStartDatePicker"
                 android:backgroundTint="@color/maire"
                 android:textColor="@color/yellow"
                 android:textSize="16sp"
@@ -197,6 +202,7 @@ android:background="@color/maire"
                 android:layout_marginTop="24dp"
                 android:background="@drawable/edit_text_background"
                 android:text="@string/description"
+                android:onClick="openEndDatePicker"
                 android:backgroundTint="@color/maire"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.497"
