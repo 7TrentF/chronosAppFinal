@@ -27,6 +27,7 @@ import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.PercentFormatter
 import com.github.mikephil.charting.utils.MPPointF
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -66,106 +67,117 @@ class Report : AppCompatActivity() {
         pieChart.setEntryLabelColor(Color.WHITE)
         pieChart.setEntryLabelTextSize(12f)
 
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        // Check if the user is authenticated
+        currentUser?.let { user ->
 
-        // Retrieve total times for each category from Firebase
-        val database = FirebaseDatabase.getInstance().reference
-        val categoryTimesRef = database.child("CategoryTimes")
-        categoryTimesRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val categories = mutableMapOf<String, Long>()
-                for (categorySnapshot in dataSnapshot.children) {
-                    val category = categorySnapshot.key ?: ""
-                    val totalTime =
-                        categorySnapshot.child("totalTime").getValue(Long::class.java) ?: 0
-                    categories[category] = totalTime
-                }
 
-                // Create PieEntries based on the total times for each category
-                val entries: ArrayList<PieEntry> = ArrayList()
-                for ((category, totalTime) in categories) {
-                    entries.add(
-                        PieEntry(
-                            totalTime.toFloat(),
-                            category
-                        )
-                    ) // Use the total time as the value
-                }
+
+
+            // Retrieve total times for each category from Firebase
+            val database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
+            val categoryTimesRef = database.child("CategoryTimes")
+            categoryTimesRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val categories = mutableMapOf<String, Long>()
+                    for (categorySnapshot in dataSnapshot.children) {
+                        val category = categorySnapshot.key ?: ""
+                        val totalTime =
+                            categorySnapshot.child("totalTime").getValue(Long::class.java) ?: 0
+                        categories[category] = totalTime
+                    }
+
+                    // Create PieEntries based on the total times for each category
+                    val entries: ArrayList<PieEntry> = ArrayList()
+                    for ((category, totalTime) in categories) {
+                        entries.add(
+                            PieEntry(
+                                totalTime.toFloat(),
+                                category
+                            )
+                        ) // Use the total time as the value
+                    }
 
 
 // Create TextViews for each category and its total time
-                val categoryContainer = findViewById<FrameLayout>(R.id.category_container)
-                var topPadding = 30 // Initial top padding
+                    val categoryContainer = findViewById<FrameLayout>(R.id.category_container)
+                    var topPadding = 30 // Initial top padding
 
-                for ((category, totalTime) in categories) {
-                    // Convert milliseconds to hours, minutes, and seconds
-                    val hours = TimeUnit.MILLISECONDS.toHours(totalTime)
-                    val minutes = TimeUnit.MILLISECONDS.toMinutes(totalTime) % 60
-                    val seconds = TimeUnit.MILLISECONDS.toSeconds(totalTime) % 60
+                    for ((category, totalTime) in categories) {
+                        // Convert milliseconds to hours, minutes, and seconds
+                        val hours = TimeUnit.MILLISECONDS.toHours(totalTime)
+                        val minutes = TimeUnit.MILLISECONDS.toMinutes(totalTime) % 60
+                        val seconds = TimeUnit.MILLISECONDS.toSeconds(totalTime) % 60
 
-                    // Format the time as a string in HH:mm:ss format
-                    val formattedTime = String.format("%02d:%02d:%02d", hours, minutes, seconds)
+                        // Format the time as a string in HH:mm:ss format
+                        val formattedTime = String.format("%02d:%02d:%02d", hours, minutes, seconds)
 
-                    // Create a TextView for the category and its total time
-                    val textView = TextView(this@Report).apply {
-                        // Combine category name and formatted time with a space in between
-                        text =
-                            "$category $formattedTime" // Display category name followed by the formatted time
-                        setTextColor(Color.WHITE) // Set the text color to white
-                        textSize = 16f // Set the text size
-                        layoutParams = FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        ).apply {
-                            marginStart = 30 // Add some margin to the start
-                            topPadding = topPadding // Use the dynamic top padding
+                        // Create a TextView for the category and its total time
+                        val textView = TextView(this@Report).apply {
+                            // Combine category name and formatted time with a space in between
+                            text =
+                                "$category $formattedTime" // Display category name followed by the formatted time
+                            setTextColor(Color.WHITE) // Set the text color to white
+                            textSize = 16f // Set the text size
+                            layoutParams = FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.WRAP_CONTENT
+                            ).apply {
+                                marginStart = 30 // Add some margin to the start
+                                topPadding = topPadding // Use the dynamic top padding
+                            }
                         }
+                        textView.setPadding(0, topPadding, 0, 0) // Apply padding to the top
+                        categoryContainer.addView(textView)
+                        topPadding += 40 // Increase the top padding for the next TextView
                     }
-                    textView.setPadding(0, topPadding, 0, 0) // Apply padding to the top
-                    categoryContainer.addView(textView)
-                    topPadding += 40 // Increase the top padding for the next TextView
+
+                    // Assign colors to each category
+                    val colors: ArrayList<Int> = ArrayList()
+                    val predefinedColors = listOf(
+                        resources.getColor(R.color.blue),
+                        resources.getColor(R.color.yellow),
+                        resources.getColor(R.color.red),
+                        resources.getColor(R.color.purple_200)
+
+                    )
+                    var colorIndex = predefinedColors.size
+                    for ((_, _) in categories) { // Iterate over categories to assign colors
+                        if (colorIndex >= predefinedColors.size) {
+                            colorIndex = 0
+                        }
+                        colors.add(predefinedColors[colorIndex])
+                        colorIndex++
+                    }
+
+                    // Update the pie chart with the new entries
+                    val dataSet = PieDataSet(entries, "Categories")
+                    dataSet.setDrawIcons(false)
+                    dataSet.sliceSpace = 3f
+                    dataSet.iconsOffset = MPPointF(0f, 40f)
+                    dataSet.selectionShift = 5f
+                    dataSet.colors = colors // Assign the colors to the dataset
+
+                    val data = PieData(dataSet)
+                    data.setValueFormatter(PercentFormatter())
+                    data.setValueTextSize(15f)
+                    data.setValueTypeface(Typeface.DEFAULT_BOLD)
+                    data.setValueTextColor(Color.WHITE)
+                    pieChart.data = data
+                    pieChart.highlightValues(null)
+                    pieChart.invalidate()
+
                 }
 
-                // Assign colors to each category
-                val colors: ArrayList<Int> = ArrayList()
-                val predefinedColors = listOf(
-                    resources.getColor(R.color.blue),
-                    resources.getColor(R.color.yellow),
-                    resources.getColor(R.color.red),
-                    resources.getColor(R.color.purple_200)
-
-                )
-                var colorIndex = predefinedColors.size
-                for ((_, _) in categories) { // Iterate over categories to assign colors
-                    if (colorIndex >= predefinedColors.size) {
-                        colorIndex = 0
-                    }
-                    colors.add(predefinedColors[colorIndex])
-                    colorIndex++
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e(
+                        "Firebase",
+                        "Failed to retrieve category times",
+                        databaseError.toException()
+                    )
                 }
-
-                // Update the pie chart with the new entries
-                val dataSet = PieDataSet(entries, "Categories")
-                dataSet.setDrawIcons(false)
-                dataSet.sliceSpace = 3f
-                dataSet.iconsOffset = MPPointF(0f, 40f)
-                dataSet.selectionShift = 5f
-                dataSet.colors = colors // Assign the colors to the dataset
-
-                val data = PieData(dataSet)
-                data.setValueFormatter(PercentFormatter())
-                data.setValueTextSize(15f)
-                data.setValueTypeface(Typeface.DEFAULT_BOLD)
-                data.setValueTextColor(Color.WHITE)
-                pieChart.data = data
-                pieChart.highlightValues(null)
-                pieChart.invalidate()
-
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.e("Firebase", "Failed to retrieve category times", databaseError.toException())
-            }
-        })
+            })
+        }
 
         val projectCheckbox = findViewById<CheckBox>(R.id.projectCheckbox)
         val categoryCheckbox = findViewById<CheckBox>(R.id.categoryCheckbox)

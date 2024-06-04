@@ -14,12 +14,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.auth
+import com.google.firebase.database.database
 
 class Register : AppCompatActivity() {
-    private lateinit var user:EditText
-    private lateinit var pass:EditText
-    private lateinit var btnReg:Button
-    private lateinit var auth:FirebaseAuth
+    private lateinit var user: EditText
+    private lateinit var pass: EditText
+    private lateinit var btnReg: Button
+    private lateinit var auth: FirebaseAuth
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -38,21 +39,32 @@ class Register : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        btnReg.setOnClickListener(){
+        btnReg.setOnClickListener() {
             val username = user.text.toString()
             val password = pass.text.toString()
-            registerUser(username,password)
+            registerUser(username, password)
         }
 
     }
+
     private fun registerUser(username: String, password: String) {
         auth.createUserWithEmailAndPassword(username, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(baseContext,"Registration Successful",Toast.LENGTH_LONG).show()
-                    val intent = Intent(this@Register,Login::class.java)
-                    startActivity(intent)
-                    finish()
+                    val user = auth.currentUser
+                    user?.let {
+                        val userId = it.uid
+                        // Create a path specific to this user in the database
+                        val userEntriesRef = Firebase.database.reference.child("user_entries").child(userId)
+
+                        // You can save initial data for the user under this path if needed
+                        // userEntriesRef.child("initial_entry").setValue("Initial data")
+
+                        Toast.makeText(baseContext, "Registration Successful", Toast.LENGTH_LONG).show()
+                        val intent = Intent(this@Register, Login::class.java)
+                        startActivity(intent)
+                        finish()
+                    }
                 } else {
                     when {
                         task.exception is FirebaseAuthWeakPasswordException -> {
@@ -67,6 +79,6 @@ class Register : AppCompatActivity() {
                     }
                 }
             }
-
     }
+
 }

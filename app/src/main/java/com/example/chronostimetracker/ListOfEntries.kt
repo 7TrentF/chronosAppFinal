@@ -28,6 +28,10 @@ import java.util.concurrent.TimeUnit
 import android.app.DatePickerDialog
 import android.content.ContentValues.TAG
 import android.util.Log
+import android.widget.ImageView
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -46,6 +50,7 @@ class ListOfEntries : AppCompatActivity() {
     private var timerRunnable: Runnable? = null
     private var startTime: Long = 0
     private var isTimerRunning = false
+    private lateinit var currentUser: FirebaseUser
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +61,7 @@ class ListOfEntries : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
 
         val toolbar: Toolbar = findViewById(R.id.my_toolbar)
         setSupportActionBar(toolbar)
@@ -108,12 +114,20 @@ class ListOfEntries : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
-                R.id.login -> {
-                    // Open Login activity when the Login item is clicked
+                R.id.logout -> {
+                    // Sign out the current user
+                    FirebaseAuth.getInstance().signOut()
+
+                    // Open Login activity
                     val intent = Intent(this, Login::class.java)
                     startActivity(intent)
+
+                    // Finish the current activity to prevent the user from going back
+                    finish()
+
                     true
                 }
+
 
                 R.id.Timesheet -> {
                     // Open Login activity when the Login item is clicked
@@ -130,44 +144,61 @@ class ListOfEntries : AppCompatActivity() {
 
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
     private fun retrieveEntriesFromFirebase() {
-        val database = FirebaseDatabase.getInstance()
-        val ref = database.getReference("timesheetEntries")
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            val database = FirebaseDatabase.getInstance()
+            val ref = database.getReference("user_entries").child(user.uid).child("Timesheet Entries")
 
-        ref.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                entries.clear() // Clear the existing entries
-                for (snapshot in dataSnapshot.children) {
-                    val entry = snapshot.getValue(TimesheetData::class.java)
-                    if (entry != null) {
-                        entries.add(entry)
+            ref.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    entries.clear() // Clear the existing entries
+                    for (snapshot in dataSnapshot.children) {
+                        val entry = snapshot.getValue(TimesheetData::class.java)
+                        if (entry != null) {
+                            entries.add(entry)
+                        }
                     }
+                    adapter.notifyDataSetChanged() // Notify the adapter about data changes
                 }
-                adapter.notifyDataSetChanged() // Notify the adapter about data changes
-            }
 
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.e("ListOfEntries", "Failed to read entries", databaseError.toException())
-            }
-        })
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("ListOfEntries", "Failed to read entries", databaseError.toException())
+                }
+            })
+        }
     }
 
+
+
+
+
+
+
     private fun populateCategorySpinner() {
-        // Reference to the Firebase database
-        val database = FirebaseDatabase.getInstance().reference
-        val timesheetRef = database.child("timesheetEntries")
-        val categoryRef = database.child("CategoryData")
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            // Reference to the Firebase database under the specific user's path
+            val database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
+            val timesheetRef = database.child("Timesheet Entries") // Reference to the timesheetEntries child
+            val categoryRef = database.child("categoryData") // Reference to the categoryData child
 
         // Initialize Spinner
         val spinner: Spinner = findViewById(R.id.categorySpinner)
 
         // Mutable list to hold the filter options
-        val mutableFilterOptions = mutableListOf( "None", "Filter by Categories", "Filter by Date Range")
+        val mutableFilterOptions =
+            mutableListOf("None", "Filter by Categories", "Filter by Date Range")
 
         // Pass the mutable list to the ArrayAdapter
-        val spinnerArrayAdapter = ArrayAdapter<String>(this@ListOfEntries, android.R.layout.simple_spinner_item, mutableFilterOptions)
+        val spinnerArrayAdapter = ArrayAdapter<String>(
+            this@ListOfEntries,
+            android.R.layout.simple_spinner_item,
+            mutableFilterOptions
+        )
         spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = spinnerArrayAdapter
 
@@ -175,7 +206,12 @@ class ListOfEntries : AppCompatActivity() {
 
         // Set the onItemSelectedListener for the Spinner
         spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+            override fun onItemSelected(
+                parent: AdapterView<*>,
+                view: View,
+                position: Int,
+                id: Long
+            ) {
                 val selectedOption = parent.getItemAtPosition(position).toString()
                 if (selectedOption == "Filter by Categories") {
                     showCategorySelectionDialog()
@@ -200,7 +236,7 @@ class ListOfEntries : AppCompatActivity() {
                     }, year, month, day).show()
                 } else if (selectedOption == "None") {
                     // Clear all filters and update the UI
-                    clearAllFiltersAndUpdateUI()
+                    adapter.updateData(entries)
                 }
             }
 
@@ -224,7 +260,8 @@ class ListOfEntries : AppCompatActivity() {
                     override fun onDataChange(categoryDataSnapshot: DataSnapshot) {
                         val categoryNamesStringList = mutableListOf<String>()
                         for (categorySnapshot in categoryDataSnapshot.children) {
-                            val categoryName = categorySnapshot.child("category_name").getValue(String::class.java)
+                            val categoryName =
+                                categorySnapshot.child("category_name").getValue(String::class.java)
                             categoryName?.let { categoryNamesStringList.add(it) }
                         }
 
@@ -239,7 +276,11 @@ class ListOfEntries : AppCompatActivity() {
                     }
 
                     override fun onCancelled(databaseError: DatabaseError) {
-                        Log.e("Firebase", "Failed to retrieve category names", databaseError.toException())
+                        Log.e(
+                            "Firebase",
+                            "Failed to retrieve category names",
+                            databaseError.toException()
+                        )
                     }
                 })
             }
@@ -249,52 +290,60 @@ class ListOfEntries : AppCompatActivity() {
             }
         })
     }
+    }
 
 
     private fun clearAllFiltersAndUpdateUI() {
-        filterEntriesByCategory("")
-        filterEntriesByDate("", "")
-    }
+
+    adapter.updateData(entries)
+
+
+
+        }
+
+
+
 
 
     private fun showCategorySelectionDialog() {
-        val database = FirebaseDatabase.getInstance().reference
-        val categoryRef = database.child("CategoryData")
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            val database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
+            val categoryRef = database.child("categoryData") // Reference to the categoryData child
 
-        // Retrieve all saved categories from Firebase
-        categoryRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(categoryDataSnapshot: DataSnapshot) {
-                val categoryNamesStringList = mutableListOf<String>()
-                for (categorySnapshot in categoryDataSnapshot.children) {
-                    val categoryName = categorySnapshot.getValue(String::class.java)
-                    categoryName?.let { categoryNamesStringList.add(it) }
+            // Retrieve all saved categories from Firebase
+            categoryRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(categoryDataSnapshot: DataSnapshot) {
+                    val categoryNamesStringList = mutableListOf<String>()
+                    for (categorySnapshot in categoryDataSnapshot.children) {
+                        val categoryName = categorySnapshot.getValue(String::class.java)
+                        categoryName?.let { categoryNamesStringList.add(it) }
+                    }
+
+                    // Remove duplicates from the list of category names
+                    val uniqueCategoryNames = categoryNamesStringList.distinct()
+
+                    // Convert uniqueCategoryNames to an array
+                    val items = uniqueCategoryNames.toTypedArray()
+
+                    // Build the dialog
+                    AlertDialog.Builder(this@ListOfEntries)
+                        .setTitle("Select a Category")
+                        .setSingleChoiceItems(items, -1) { dialog, which ->
+                            // The user has selected a category
+                            filterEntriesByCategory(uniqueCategoryNames[which])
+                            dialog.dismiss()
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
                 }
 
-                // Remove duplicates from the list of category names
-                val uniqueCategoryNames = categoryNamesStringList.distinct()
-
-                // Convert uniqueCategoryNames to an array
-                val items = uniqueCategoryNames.toTypedArray()
-
-                // Build the dialog
-                AlertDialog.Builder(this@ListOfEntries)
-                    .setTitle("Select a Category")
-                    .setSingleChoiceItems(items, -1) { dialog, which ->
-                        // The user has selected a category
-                        filterEntriesByCategory(uniqueCategoryNames[which])
-                        dialog.dismiss()
-                    }
-                    .setNegativeButton("Cancel", null)
-                    .show()
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.e("Firebase", "Failed to retrieve category names", databaseError.toException())
-            }
-        })
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve category names", databaseError.toException())
+                }
+            })
+        }
     }
-
-
 
 
     private fun filterEntriesByCategory(selectedCategory: String?) {
@@ -324,47 +373,51 @@ class ListOfEntries : AppCompatActivity() {
     }
 
     private fun filterEntriesByDate(startDate: String, endDate: String) {
-        val database = FirebaseDatabase.getInstance().reference
-        val timesheetRef = database.child("timesheetEntries")
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            val database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
+            val timesheetRef = database.child("Timesheet Entries") // Reference to the "Timesheet Entries" child
 
-        timesheetRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val filteredEntries = mutableListOf<TimesheetData>()
+            timesheetRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val filteredEntries = mutableListOf<TimesheetData>()
 
-                for (entrySnapshot in dataSnapshot.children) {
-                    val entry = entrySnapshot.getValue(TimesheetData::class.java)
+                    for (entrySnapshot in dataSnapshot.children) {
+                        val entry = entrySnapshot.getValue(TimesheetData::class.java)
 
-                    // Ensure entry is not null and creation time is available
-                    if (entry != null && entry.creationTime != null) {
-                        val creationTime = entry.creationTime
+                        // Ensure entry is not null and creation time is available
+                        if (entry != null && entry.creationTime != null) {
+                            val creationTime = entry.creationTime
 
-                        // Convert creation time to Date object
-                        val creationDate = Date(creationTime)
+                            // Convert creation time to Date object
+                            val creationDate = Date(creationTime)
 
-                        // Parse start and end date strings to Date objects
-                        val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
-                        val startDateObj = sdf.parse(startDate)
-                        val endDateObj = sdf.parse(endDate)
+                            // Parse start and end date strings to Date objects
+                            val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
+                            val startDateObj = sdf.parse(startDate)
+                            val endDateObj = sdf.parse(endDate)
 
-                        // Check if the creation date falls within the selected range
-                        if (creationDate in startDateObj..endDateObj) {
-                            // Entry falls within the selected date range, add it to filtered list
-                            filteredEntries.add(entry)
+                            // Check if the creation date falls within the selected range
+                            if (creationDate in startDateObj..endDateObj) {
+                                // Entry falls within the selected date range, add it to filtered list
+                                filteredEntries.add(entry)
+                            }
                         }
                     }
+
+                    // Now you have the filtered entries, you can update the UI or perform further operations
+                    // For example, you can display the filtered entries in a RecyclerView or ListView
+                    // Or you can call a function to update the UI with the filtered entries
+
+                    adapter.updateData(filteredEntries)
                 }
-
-                // Now you have the filtered entries, you can update the UI or perform further operations
-                // For example, you can display the filtered entries in a RecyclerView or ListView
-                // Or you can call a function to update the UI with the filtered entries
-
-                adapter.updateData(filteredEntries)
-            }
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.e("Firebase", "Failed to retrieve timesheet data", databaseError.toException())
-            }
-        })
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve timesheet data", databaseError.toException())
+                }
+            })
+        }
     }
+
 
 
 

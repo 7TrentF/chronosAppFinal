@@ -31,4 +31,14 @@
     <string name="App_name">Chronos Timesheets</string>
     <string name="Login">Login</string>
     <string name="Password">Password</string>
+
+
+    <string name="Photo">Category:</string>
+    <string name="max_time">Max Time</string>
+    <string name="min_time">Min Time</string>
+    <string name="start_date">Start Date</string>
+    <string name="end_date">End Date</string>
+    <string name="end_time">End Time</string>
+    <string name="start_time">Start Time</string>
+
 </resources>

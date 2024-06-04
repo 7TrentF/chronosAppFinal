@@ -19,6 +19,7 @@ import android.content.Intent
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import java.util.*
@@ -154,51 +155,65 @@ class TimesheetEntry : AppCompatActivity() {
             return
         }
 
-        // Initialize Firebase database reference
-        val database = FirebaseDatabase.getInstance()
-        val categoryRef = database.getReference("CategoryData")
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            // Initialize Firebase database reference
+            val database = FirebaseDatabase.getInstance()
+            val categoryRef = database.getReference("user_entries").child(user.uid).child("categoryData")
 
-        // Generate a unique key for the category
-        val uniqueCategoryKey = categoryRef.push().key ?: return
+            // Generate a unique key for the category
+            val uniqueCategoryKey = categoryRef.push().key ?: return
 
-        // Save the category to Firebase
-        categoryRef.child(uniqueCategoryKey).setValue(categoryText).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Toast.makeText(this, "Category saved successfully", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Failed to save category", Toast.LENGTH_SHORT).show()
-                Log.e("FirebaseError", "Error saving category: ${task.exception?.message}")
+            // Save the category to Firebase
+            categoryRef.child(uniqueCategoryKey).setValue(categoryText).addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Toast.makeText(this, "Category saved successfully", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Failed to save category", Toast.LENGTH_SHORT).show()
+                    Log.e("FirebaseError", "Error saving category: ${task.exception?.message}")
+                }
             }
         }
     }
 
     private fun saveDataToFirebase() {
-        val uniqueKey = database.child("timesheetEntries").push().key ?: return // Ensure uniqueKey is not null
-        uniqueId = uniqueKey.hashCode()
-        val projectName = etProjectName.text.toString()
-        val category = etCategory.text.toString()
-        val description = etDescription.text.toString()
-        val startTime = startTimePicker.getTime()
-        val startDate = startDatePicker.getDate()
-        val endTime = EndTimePicker.getTime()
-        val endDate = endDatePicker.getDate()
-        val minHoursValue = minHours.text.toString().toInt()
-        val maxHoursValue = maxHours.text.toString().toInt()
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            // Get a reference to the user's entry path
+            val userEntriesRef = database.child("user_entries").child(user.uid)
 
-        val creationTime = System.currentTimeMillis()
-        val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
-        val formattedDate = sdf.format(Date(creationTime))
+            // Create a reference to the Timesheet Entries child under the user's path
+            val timesheetEntriesRef = userEntriesRef.child("Timesheet Entries")
 
+            // Generate a unique key for the timesheet entry
+            val uniqueKey = timesheetEntriesRef.push().key ?: return
 
-        val bitmap = (imgUserImage.drawable as BitmapDrawable).bitmap
-        val encodedImage = camera.encodeImage(bitmap)
+            // Retrieve input data
+            val projectName = etProjectName.text.toString()
+            val category = etCategory.text.toString()
+            val description = etDescription.text.toString()
+            val startTime = startTimePicker.getTime()
+            val startDate = startDatePicker.getDate()
+            val endTime = EndTimePicker.getTime()
+            val endDate = endDatePicker.getDate()
+            val minHoursValue = minHours.text.toString().toInt()
+            val maxHoursValue = maxHours.text.toString().toInt()
+            val creationTime = System.currentTimeMillis()
+            val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
+            val formattedDate = sdf.format(Date(creationTime))
 
+            // Retrieve and encode image if available
+            val bitmap = (imgUserImage.drawable as BitmapDrawable).bitmap
+            val encodedImage = camera.encodeImage(bitmap)
+
+            // Create a TimesheetData object
             val entry = TimesheetData(
                 uniqueKey, projectName, category, description, startTime, startDate,
                 endTime, endDate, minHoursValue, maxHoursValue, encodedImage, creationTime
             )
 
-            database.child("timesheetEntries").child(uniqueKey).setValue(entry)
+            // Save the entry under the Timesheet Entries child
+            timesheetEntriesRef.child(uniqueKey).setValue(entry)
                 .addOnCompleteListener(OnCompleteListener<Void> { task ->
                     if (task.isSuccessful) {
                         Log.d("TimesheetEntry", "Data saved successfully")
@@ -207,6 +222,7 @@ class TimesheetEntry : AppCompatActivity() {
                     }
                 })
 
+            // Log the data for debugging purposes
             Log.d("TimesheetEntry", "Project Name: $projectName")
             Log.d("TimesheetEntry", "Category: $category")
             Log.d("TimesheetEntry", "Description: $description")
@@ -218,9 +234,8 @@ class TimesheetEntry : AppCompatActivity() {
             Log.d("TimesheetEntry", "Max Hours: $maxHoursValue")
             Log.d("TimesheetEntry", "Image: $encodedImage")
             Log.d("TimesheetEntry", "Creation Time: $formattedDate")
-
+        }
     }
-
 
 
 

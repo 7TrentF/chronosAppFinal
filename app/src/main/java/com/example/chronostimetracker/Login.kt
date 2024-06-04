@@ -12,6 +12,8 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.Firebase
+import com.google.firebase.database.database
+
 class Login : AppCompatActivity() {
     private lateinit var register: Button
     private lateinit var login: Button
@@ -49,22 +51,28 @@ class Login : AppCompatActivity() {
 
         }
     }
+
     private fun userLogin(loginEmail: String, loginPassword: String) {
         auth.signInWithEmailAndPassword(loginEmail, loginPassword)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(baseContext,"Login Successful", Toast.LENGTH_LONG).show()
-                    val intent = Intent( this@Login,ListOfEntries::class.java)
-                    startActivity(intent)
-                    finish()
+                    val user = auth.currentUser
+                    user?.let {
+                        val userId = it.uid
+                        // Navigate to ListOfEntries activity
+                        val intent = Intent(this@Login, ListOfEntries::class.java)
+                        startActivity(intent)
+                        finish()
+                    }
                 } else {
                     Toast.makeText(
                         baseContext,
                         "Login failed.",
-                        Toast.LENGTH_SHORT,
+                        Toast.LENGTH_SHORT
                     ).show()
                 }
             }
-
     }
+
+
 }
