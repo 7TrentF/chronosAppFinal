@@ -1,6 +1,8 @@
 package com.example.chronostimetracker
 
 import android.Manifest
+import android.app.TimePickerDialog
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -27,19 +29,40 @@ import java.util.*
 
 class SetDailyGoalActivity : AppCompatActivity() {
 
-    private lateinit var minGoalEditText: EditText
-    private lateinit var maxGoalEditText: EditText
+    private lateinit var minGoalButton: Button
+    private lateinit var maxGoalButton: Button
     private lateinit var saveGoalButton: Button
+
+
     // Firebase reference
     private lateinit var database: DatabaseReference
+    private var minGoal: String? = null
+    private var maxGoal: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set_daily_goal)
 
-        minGoalEditText = findViewById(R.id.etMinGoalEditText)
-        maxGoalEditText = findViewById(R.id.etMaxGoalEditText)
+        minGoalButton = findViewById(R.id.btnMinGoal)
+        maxGoalButton = findViewById(R.id.btnMaxGoal)
         saveGoalButton = findViewById(R.id.saveGoalButton)
+
+        minGoalButton.setOnClickListener {
+            showTimePickerDialog { hour, minute ->
+                minGoal = String.format("%02d:%02d", hour, minute)
+                minGoalButton.text = "Min Goal: $minGoal"
+            }
+        }
+
+        maxGoalButton.setOnClickListener {
+            showTimePickerDialog { hour, minute ->
+                maxGoal = String.format("%02d:%02d", hour, minute)
+                maxGoalButton.text = "Max Goal: $maxGoal"
+            }
+        }
+
+
+
 
         saveGoalButton.setOnClickListener {
             saveDailyGoal()
@@ -51,13 +74,16 @@ class SetDailyGoalActivity : AppCompatActivity() {
         checkDailyGoal()
     }
 
-    override fun onStart() {
-        super.onStart()
 
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null) {
-            checkDailyGoalSet()
-        }
+
+    private fun showTimePickerDialog(onTimeSet: (hour: Int, minute: Int) -> Unit) {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+
+        TimePickerDialog(this, { _, selectedHour, selectedMinute ->
+            onTimeSet(selectedHour, selectedMinute)
+        }, hour, minute, true).show()
     }
 
     private fun checkDailyGoal() {
@@ -72,7 +98,7 @@ class SetDailyGoalActivity : AppCompatActivity() {
                     if (dataSnapshot.exists()) {
                         showEditDailyGoalLayout()
                     } else {
-                        setupSaveButton()
+                        setupSaveButtonForInitialLayout()
                     }
                 }
 
@@ -85,18 +111,60 @@ class SetDailyGoalActivity : AppCompatActivity() {
 
     private fun showEditDailyGoalLayout() {
         setContentView(R.layout.edit_daily_goal)
-        setupSaveButton()
+        minGoalButton = findViewById(R.id.btnMinGoal)
+        maxGoalButton = findViewById(R.id.btnMaxGoal)
+        saveGoalButton = findViewById(R.id.btnSave)
+
+        minGoalButton.setOnClickListener {
+            showTimePickerDialog { hour, minute ->
+                minGoal = String.format("%02d:%02d", hour, minute)
+                minGoalButton.text = "Min Goal: $minGoal"
+            }
+        }
+
+        maxGoalButton.setOnClickListener {
+            showTimePickerDialog { hour, minute ->
+                maxGoal = String.format("%02d:%02d", hour, minute)
+                maxGoalButton.text = "Max Goal: $maxGoal"
+            }
+        }
+
+        saveGoalButton.setOnClickListener {
+            val minGoal = this.minGoal
+            val maxGoal = this.maxGoal
+
+            if (minGoal != null && maxGoal != null) {
+                saveGoals(minGoal, maxGoal)
+            } else {
+                Toast.makeText(this, "Please enter valid goals", Toast.LENGTH_SHORT).show()
+            }
+        }
         loadCurrentGoals()
     }
 
-    private fun setupSaveButton() {
+
+    private fun setupSaveButtonForInitialLayout() {
+        saveGoalButton.setOnClickListener {
+            val minGoal = this.minGoal
+            val maxGoal = this.maxGoal
+
+            if (minGoal != null && maxGoal != null) {
+                saveGoals(minGoal, maxGoal)
+            } else {
+                Toast.makeText(this, "Please enter valid goals", Toast.LENGTH_SHORT).show()
+            }
+
+            val intent = Intent(this, ListOfEntries::class.java)
+            startActivity(intent)
+        }
+    }
+
+
+    private fun setupSaveButtonForEditLayout() {
         val btnSave = findViewById<Button>(R.id.btnSave)
         btnSave.setOnClickListener {
-            val etMinGoal = findViewById<EditText>(R.id.etMinGoal)
-            val etMaxGoal = findViewById<EditText>(R.id.etMaxGoal)
-
-            val minGoal = etMinGoal.text.toString().toLongOrNull()
-            val maxGoal = etMaxGoal.text.toString().toLongOrNull()
+            val minGoal = this.minGoal
+            val maxGoal = this.maxGoal
 
             if (minGoal != null && maxGoal != null) {
                 saveGoals(minGoal, maxGoal)
@@ -105,6 +173,7 @@ class SetDailyGoalActivity : AppCompatActivity() {
             }
         }
     }
+
 
     private fun loadCurrentGoals() {
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -116,11 +185,11 @@ class SetDailyGoalActivity : AppCompatActivity() {
             dailyGoalRef.child(currentDate).addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     if (dataSnapshot.exists()) {
-                        val minGoal = dataSnapshot.child("minGoal").getValue(Long::class.java)
-                        val maxGoal = dataSnapshot.child("maxGoal").getValue(Long::class.java)
+                        val minGoal = dataSnapshot.child("minGoal").getValue(String::class.java)
+                        val maxGoal = dataSnapshot.child("maxGoal").getValue(String::class.java)
 
-                        findViewById<TextView>(R.id.tvCurrentMin).text = "Min Goal: $minGoal"
-                        findViewById<TextView>(R.id.tvCurrentMax).text = "Max Goal: $maxGoal"
+                        findViewById<TextView>(R.id.tvCurrentMin).text = "Min Goal: $minGoal Hour(s)"
+                        findViewById<TextView>(R.id.tvCurrentMax).text = "Max Goal: $maxGoal Hour(s)"
                     }
                 }
 
@@ -131,7 +200,7 @@ class SetDailyGoalActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveGoals(minGoal: Long, maxGoal: Long) {
+    private fun saveGoals(minGoal: String, maxGoal: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->
             val userEntriesRef = database.child(user.uid)
@@ -153,8 +222,8 @@ class SetDailyGoalActivity : AppCompatActivity() {
     }
 
     private fun saveDailyGoal() {
-        val minGoal = minGoalEditText.text.toString().toLongOrNull()
-        val maxGoal = maxGoalEditText.text.toString().toLongOrNull()
+        val minGoal = this.minGoal
+        val maxGoal = this.maxGoal
 
         if (minGoal == null || maxGoal == null) {
             Toast.makeText(this, "Please enter valid goals", Toast.LENGTH_SHORT).show()

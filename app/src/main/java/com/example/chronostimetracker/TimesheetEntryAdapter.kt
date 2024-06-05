@@ -143,8 +143,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         }
     }
 
-
-
     private fun showBottomSheetDialog(context: Context, entry: TimesheetData) {
         val editHandler = TimesheetEdit(context, database)
         editHandler.showEditDialog(entry) { editedEntry ->
@@ -159,8 +157,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
             }
         }
     }
-
-
 
     fun showTimerDialog(context: Context,  entry: TimesheetData, position: Int) {
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -195,22 +191,17 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
 
                 // Calculate the elapsed time
                 val elapsedTime = System.currentTimeMillis() - startTime
-
                 // Set the formatted time based on the new total elapsed time
                 val formattedTime = formatElapsedTime(elapsedTime)
-
                 // Set the text of timerTextView with the formatted time
                 timerTextView.text = formattedTime
 
-                // Get a reference to the user's entry path
-                val userEntriesRef = database.child("user_entries")
 
                 database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
                 val timesheetEntryRef = database.child("Timesheet Entries").child(entry.uniqueId.toString())
 
                 // Get a reference to the user's totalTimeTracked path
                 val totalTimeTrackedRef = database.child("totalTimeTracked")
-
                 // Get the current date in the format "YYYY-MM-DD"
                 val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
@@ -223,7 +214,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                             // Entry for the current day doesn't exist, create a new entry
                             totalTimeTrackedRef.child(currentDate).child("Time").setValue(0L)
                         }
-
                     }
                     override fun onCancelled(databaseError: DatabaseError) {
                         Log.e("Firebase", "Failed to check totalTimeTracked for the current day", databaseError.toException())

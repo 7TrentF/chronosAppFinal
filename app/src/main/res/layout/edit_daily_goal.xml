@@ -1,78 +1,142 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- edit_daily_goal.xml -->
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@color/black"
     android:padding="16dp">
 
 
-
-
     <TextView
+        android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="52dp"
+        android:text="The daily Goal has been set for today"
+        android:textColor="@color/white"
         android:textSize="20sp"
-        android:textColor="@color/white"
-        android:text="The daily Goal has been set for today."/>
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.444"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/category_container"
+        android:layout_width="383dp"
+        android:layout_height="183dp"
+        android:layout_marginTop="32dp"
+
+        android:backgroundTint="@color/maire"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.513"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="386dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            app:layout_constraintEnd_toEndOf="@+id/tvProjectName"
+            app:layout_constraintStart_toEndOf="@+id/tvProjectName">
+
+
+            <TextView
+                android:id="@+id/textViewCurrentGoal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:paddingTop="16dp"
+                android:text="Current Goals:"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.023"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvCurrentMin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="@string/minimum_hours"
+                android:paddingBottom="16dp"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textViewCurrentGoal" />
+
+            <TextView
+
+                android:id="@+id/tvCurrentMax"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:hint="@string/Maximum_Hours"
+                android:paddingBottom="16dp"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.403"
+                app:layout_constraintStart_toStartOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
 
     <TextView
-        android:id="@+id/textViewCurrentGoal"
+        android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        android:textSize="18sp"
-        android:text="Current Goals:"
-        android:paddingTop="16dp"/>
-
-    <TextView
-        android:id="@+id/tvCurrentMin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textColor="@color/white"
-        android:paddingBottom="16dp"/>
-
-
-    <TextView
-
-        android:id="@+id/tvCurrentMax"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingBottom="16dp"
-        android:textColor="@color/white" />
-
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_marginTop="240dp"
         android:text="Edit the goals below:"
         android:textColor="@color/white"
-        android:textSize="18dp" />
+        android:textSize="18dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
-    <EditText
-        android:id="@+id/etMinGoal"
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/btnMinGoal"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="Enter Min Goal"
-        android:textColor="@color/white"/>
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="4dp"
+        android:text="Set Minimum Goal"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toStartOf="@+id/btnMaxGoal"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btnMaxGoal" />
 
-    <EditText
-        android:id="@+id/etMaxGoal"
-        android:layout_width="match_parent"
-        android:textColor="@color/white"
+    <Button
+        android:id="@+id/btnMaxGoal"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="Enter Max Goal"/>
-
+        android:layout_marginTop="392dp"
+        android:text="Set Maximum Goal"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.94"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/btnSave"
-        android:layout_width="127dp"
-        android:layout_height="wrap_content"
-        android:background="@drawable/filter_button"
+        android:layout_width="149dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="184dp"
+        android:background="@drawable/yellow_border"
         android:text="Save Changes"
-        android:textColor="@color/black" />
-</LinearLayout>
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
