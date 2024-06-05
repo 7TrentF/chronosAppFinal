@@ -30,6 +30,8 @@ import android.content.ContentValues.TAG
 import android.util.Log
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.navigation.Navigation.findNavController
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -66,6 +68,7 @@ class ListOfEntries : AppCompatActivity() {
 
 
 
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.BottomNavigationView)
 
         val toolbar: Toolbar = findViewById(R.id.my_toolbar)
         setSupportActionBar(toolbar)
@@ -73,11 +76,7 @@ class ListOfEntries : AppCompatActivity() {
 
         populateCategorySpinner()
 
-        val button = findViewById<Button>(R.id.btnNext)
-        button.setOnClickListener {
-            val intent = Intent(this, TimesheetEntry::class.java)
-            startActivity(intent)
-        }
+
 
         // Initialize RecyclerView
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
@@ -151,6 +150,28 @@ class ListOfEntries : AppCompatActivity() {
 
             }
         }
+
+
+
+
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.action_add -> {
+                    // Open Login activity when the Login item is clicked
+                    val intent = Intent(this, TimesheetEntry::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.action_report -> {
+                    // Open Report activity when the Report item is clicked
+                    val intent = Intent(this, Report::class.java)
+                    startActivity(intent)
+                    true
+                }
+                else -> false
+            }
+        }
+
 
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()

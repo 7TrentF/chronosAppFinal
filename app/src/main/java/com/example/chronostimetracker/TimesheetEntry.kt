@@ -18,7 +18,9 @@ import java.util.Locale
 import android.content.Intent
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.Toolbar
 import com.google.android.gms.tasks.OnCompleteListener
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
@@ -30,8 +32,6 @@ class TimesheetEntry : AppCompatActivity() {
     private lateinit var endDatePicker: DatePicker
     private lateinit var startTimePicker: TimePickerHandler
     private lateinit var EndTimePicker: TimePickerHandler
-    private lateinit var minHours: EditText
-    private lateinit var maxHours: EditText
     private lateinit var etProjectName: EditText
     private lateinit var etCategory: EditText
     private lateinit var etDescription: EditText
@@ -53,9 +53,15 @@ class TimesheetEntry : AppCompatActivity() {
             insets
         }
 
+        val toolbar: Toolbar = findViewById(R.id.my_toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = "Chronos Timesheets"
+
+
         // Initialize Firebase
         database = FirebaseDatabase.getInstance().reference
 
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.BottomNavigationView)
         // Create button
         val btnCreate: Button = findViewById(R.id.btnCreate)
         // Start and end time buttons
@@ -77,9 +83,6 @@ class TimesheetEntry : AppCompatActivity() {
         startDatePicker = DatePicker(this, startDateButton)
         endDatePicker = DatePicker(this, endDateButton)
 
-        // Min and Max hours
-        maxHours = findViewById(R.id.etMax)
-        minHours = findViewById(R.id.etMin)
 
         // Set current date as default text for buttons
         val currentDate = getCurrentDate()
@@ -95,18 +98,14 @@ class TimesheetEntry : AppCompatActivity() {
             // Validate start and end times
             startTimePicker.validateStartEndTime(startTime, endTime)
 
-            // Validate minHours and maxHours before proceeding
-            if (hoursValidator.validateMinMaxHours(
-                    minHours.text.toString(),
-                    maxHours.text.toString()
-                )) {
+
                 SaveCategory()
                 saveDataToFirebase()
                 // Start TimesheetEntryDisplayActivity and pass the unique ID
                 val intent = Intent(this, ListOfEntries::class.java)
                 intent.putExtra("uniqueId", uniqueId)
                 startActivity(intent)
-            }
+
         }
 
         camera = Camera(this)
@@ -133,6 +132,26 @@ class TimesheetEntry : AppCompatActivity() {
                     .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
                     .create()
                 dialog.show()
+            }
+        }
+
+
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.action_home -> {
+                    // Open Login activity when the Login item is clicked
+                    val intent = Intent(this, ListOfEntries::class.java)
+                    startActivity(intent)
+                    true
+                }
+
+                R.id.action_report -> {
+                    // Open Report activity when the Report item is clicked
+                    val intent = Intent(this, Report::class.java)
+                    startActivity(intent)
+                    true
+                }
+                else -> false
             }
         }
     }
@@ -196,8 +215,8 @@ class TimesheetEntry : AppCompatActivity() {
             val startDate = startDatePicker.getDate()
             val endTime = EndTimePicker.getTime()
             val endDate = endDatePicker.getDate()
-            val minHoursValue = minHours.text.toString().toInt()
-            val maxHoursValue = maxHours.text.toString().toInt()
+           // val minHoursValue = minHours.text.toString().toInt()
+           // val maxHoursValue = maxHours.text.toString().toInt()
             val creationTime = System.currentTimeMillis()
             val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
             val formattedDate = sdf.format(Date(creationTime))
@@ -209,7 +228,7 @@ class TimesheetEntry : AppCompatActivity() {
             // Create a TimesheetData object
             val entry = TimesheetData(
                 uniqueKey, projectName, category, description, startTime, startDate,
-                endTime, endDate, minHoursValue, maxHoursValue, encodedImage, creationTime
+                endTime, endDate, encodedImage, creationTime
             )
 
             // Save the entry under the Timesheet Entries child
@@ -230,8 +249,6 @@ class TimesheetEntry : AppCompatActivity() {
             Log.d("TimesheetEntry", "Start Date: $startDate")
             Log.d("TimesheetEntry", "End Time: $endTime")
             Log.d("TimesheetEntry", "End Date: $endDate")
-            Log.d("TimesheetEntry", "Min Hours: $minHoursValue")
-            Log.d("TimesheetEntry", "Max Hours: $maxHoursValue")
             Log.d("TimesheetEntry", "Image: $encodedImage")
             Log.d("TimesheetEntry", "Creation Time: $formattedDate")
         }

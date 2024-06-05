@@ -1,6 +1,7 @@
 package com.example.chronostimetracker
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.CheckBox
 import android.widget.SeekBar
@@ -34,6 +35,7 @@ import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.PercentFormatter
 import com.github.mikephil.charting.utils.MPPointF
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -87,7 +89,7 @@ class Report : AppCompatActivity() {
 
         val categoryContainer = findViewById<FrameLayout>(R.id.category_container)
         val pieChartContainer = findViewById<FrameLayout>(R.id.pie_chart_container)
-
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.BottomNavigationView)
         val pieChartView = findViewById<PieChart>(R.id.pieChart)
 
         recyclerView = findViewById(R.id.recyclerView)
@@ -107,6 +109,28 @@ class Report : AppCompatActivity() {
         CategoryDisplayButton.setOnClickListener {
             viewContainer.visibility = View.VISIBLE
         }
+
+
+
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.action_home -> {
+                    // Open Login activity when the Login item is clicked
+                    val intent = Intent(this, ListOfEntries::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.action_add -> {
+                    // Open Login activity when the Login item is clicked
+                    val intent = Intent(this, TimesheetEntry::class.java)
+                    startActivity(intent)
+                    true
+                }
+
+                else -> false
+            }
+        }
+
 
         val currentUser = FirebaseAuth.getInstance().currentUser
         // Check if the user is authenticated

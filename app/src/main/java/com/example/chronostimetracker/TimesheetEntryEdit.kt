@@ -204,7 +204,7 @@ class TimesheetEntryEdit : AppCompatActivity() {
 
             val entry = TimesheetData(
                 uniqueKey, projectName, category, description, startTime, startDate,
-                endTime, endDate, minHoursValue, maxHoursValue, encodedImage, creationTime
+                endTime, endDate, encodedImage, creationTime
             )
 
             timesheetEntriesRef.child(uniqueKey).setValue(entry)

@@ -6,6 +6,7 @@ import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
@@ -19,6 +20,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
@@ -82,10 +84,36 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
             val decodedString = Base64.decode(entry.imageData, Base64.DEFAULT)
             val decodedBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
             holder.imageView.setImageBitmap(decodedBitmap)
+
+
+            holder.imageView.setOnClickListener {
+                // Get the current image from the ImageView
+                val drawable = holder.imageView.drawable
+                if (drawable is BitmapDrawable) {
+                    val bitmap = drawable.bitmap
+                    // Inflate the dialog layout
+                    val dialogView = LayoutInflater.from(holder.itemView.context)
+                        .inflate(R.layout.dialog_image_preview, null)
+                    val imageView = dialogView.findViewById<ImageView>(R.id.previewImageView)
+                    imageView.setImageBitmap(bitmap.copy(bitmap.config, true)) // Copy the bitmap without compression
+                    // Create and show the dialog
+                    val dialog = AlertDialog.Builder(holder.itemView.context)
+                        .setView(dialogView)
+                        .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                        .create()
+                    dialog.show()
+                }
+            }
+
+
         } else {
             holder.imageView.setImageResource(R.drawable.default_image) // Default image if none is present
 
         }
+
+
+
+
 
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->

@@ -5,7 +5,7 @@
         android:id="@+id/report"
         android:title="Report"
 
-        android:icon="@drawable/report_icon" />
+        android:icon="@drawable/baseline_list_alt_24" />
 
     <item
         android:id="@+id/logout"
@@ -15,7 +15,7 @@
     <item
         android:id="@+id/Timesheet"
         android:title="Timesheet Entry"
-        android:icon="@drawable/timesheet"/>
+        android:icon="@drawable/baseline_list_alt_24"/>
 
 
     <item

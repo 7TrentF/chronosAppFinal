@@ -63,8 +63,7 @@ class TimesheetEdit(private val context: Context, private val database: Database
         endTimeButton.text = entry.endTime
         startDateButton.text = entry.startDate
         endDateButton.text = entry.endDate
-        minTimeEditText.setText(entry.minHours.toString())
-        maxTimeEditText.setText(entry.maxHours.toString())
+
 
         if (entry.imageData != null) {
             val decodedString = Base64.decode(entry.imageData, Base64.DEFAULT)
@@ -83,8 +82,6 @@ class TimesheetEdit(private val context: Context, private val database: Database
             entry.description = descriptionEditText.text.toString()
             entry.startTime =  startTimePicker.getTime()
 
-            entry.minHours = minTimeEditText.text.toString().toIntOrNull() ?: entry.minHours
-            entry.maxHours = maxTimeEditText.text.toString().toIntOrNull() ?: entry.maxHours
 
             // Call the onSave callback to save the edited entry
             onSave(entry)
