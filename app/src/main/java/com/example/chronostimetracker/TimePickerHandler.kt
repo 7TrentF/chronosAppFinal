@@ -8,7 +8,7 @@ import android.widget.Toast
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-class TimePickerHandler (private val context: Context, private val startTimeButton: Button) {
+class TimePickerHandler(private val context: Context, private val startTimeButton: Button) {
 
     private var hour = 0
     private var minute = 0
@@ -33,6 +33,12 @@ class TimePickerHandler (private val context: Context, private val startTimeButt
 
     fun validateStartEndTime(startTime: LocalTime, endTime: LocalTime) {
         if (!startTime.isBefore(endTime)) {
+            Toast.makeText(context, "Start time cannot be more than end time", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun validateMinMax(MinHours: LocalTime, MaxHours: LocalTime) {
+        if (!MinHours.isBefore(MaxHours)) {
             Toast.makeText(context, "Start time cannot be more than end time", Toast.LENGTH_SHORT).show()
         }
     }

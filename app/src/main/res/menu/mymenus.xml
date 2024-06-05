@@ -17,4 +17,10 @@
         android:title="Timesheet Entry"
         android:icon="@drawable/timesheet"/>
 
+
+    <item
+        android:id="@+id/SetDailyGoal"
+        android:title="Daily Goal"
+        android:icon="@drawable/timesheet"/>
+
 </menu>

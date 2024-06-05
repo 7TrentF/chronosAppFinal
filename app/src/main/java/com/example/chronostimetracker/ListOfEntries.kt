@@ -29,6 +29,7 @@ import android.app.DatePickerDialog
 import android.content.ContentValues.TAG
 import android.util.Log
 import android.widget.ImageView
+import android.widget.Toast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -62,6 +63,8 @@ class ListOfEntries : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+
 
 
         val toolbar: Toolbar = findViewById(R.id.my_toolbar)
@@ -137,6 +140,12 @@ class ListOfEntries : AppCompatActivity() {
                     true
                 }
 
+                R.id.SetDailyGoal -> {
+                    // Open Login activity when the Login item is clicked
+                    val intent = Intent(this, SetDailyGoalActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
 
                 else -> false
 
@@ -147,6 +156,46 @@ class ListOfEntries : AppCompatActivity() {
         toggle.syncState()
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
+
+    override fun onStart() {
+        super.onStart()
+
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            checkDailyGoalSet()
+        }
+    }
+
+    private fun checkDailyGoalSet() {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            val database = FirebaseDatabase.getInstance().reference
+            val userEntriesRef = database.child("user_entries").child(user.uid)
+            val dailyGoalRef = userEntriesRef.child("DailyGoal")
+
+            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            dailyGoalRef.child(currentDate).addListenerForSingleValueEvent(object :
+                ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    if (!dataSnapshot.exists()) {
+                        showDailyGoalNotification()
+                    }
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to check daily goal", databaseError.toException())
+                }
+            })
+        }
+    }
+    private fun showDailyGoalNotification() {
+        Toast.makeText(
+            this,
+            "You have not set a daily goal for today. Please set it now.",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
 
     private fun retrieveEntriesFromFirebase() {
         val currentUser = FirebaseAuth.getInstance().currentUser

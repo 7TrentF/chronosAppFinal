@@ -15,6 +15,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -25,6 +26,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -42,7 +44,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
     private var timerRunnable: Runnable? = null // Declare timerRunnable
     private val categoryTotalTime = mutableMapOf<String, Long>()
     private var database: DatabaseReference
-
+    private var initialTotal: Long = 0
     init {
         // Initialize Firebase Database reference
         database = FirebaseDatabase.getInstance().reference
@@ -144,42 +146,21 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
 
 
     private fun showBottomSheetDialog(context: Context, entry: TimesheetData) {
-
-        val dialog = BottomSheetDialog(context)
-        val view = LayoutInflater.from(context).inflate(R.layout.activity_timesheet_entry_edit, null)
-
-        val projectNameEditText: TextView = view.findViewById(R.id.etProjectName)
-        val categoryEditText: TextView = view.findViewById(R.id.etCategory)
-        val startTimeTextView: TextView = view.findViewById(R.id.tvStartTime)
-        val endTimeTextView: TextView = view.findViewById(R.id.tvEndTime)
-        val startDateTextView: TextView = view.findViewById(R.id.tvStartDate)
-        val endDateTextView: TextView = view.findViewById(R.id.tvEndDate)
-        val descriptionTextView: TextView = view.findViewById(R.id.tvDescription)
-        val minTimeTextView: TextView = view.findViewById(R.id.tvMinTime)
-        val maxTimeTextView: TextView = view.findViewById(R.id.tvMaxTime)
-        val userImageView: ImageView = view.findViewById(R.id.userImage)
-
-        projectNameEditText.text = entry.projectName
-        categoryEditText.text = entry.category
-        descriptionTextView.text = entry.description
-        startTimeTextView.text = entry.startTime
-        endTimeTextView.text = entry.endTime
-        startDateTextView.text = entry.startDate
-        endDateTextView.text = entry.endDate
-        minTimeTextView.text = entry.minHours.toString()
-        maxTimeTextView.text = entry.maxHours.toString()
-
-        if (entry.imageData != null) {
-            val decodedString = Base64.decode(entry.imageData, Base64.DEFAULT)
-            val decodedBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
-            userImageView.setImageBitmap(decodedBitmap)
-        } else {
-            userImageView.setImageResource(R.drawable.default_image)
+        val editHandler = TimesheetEdit(context, database)
+        editHandler.showEditDialog(entry) { editedEntry ->
+            editHandler.saveEntry(editedEntry)
+            // Update the list and notify the adapter
+            val position = entries.indexOfFirst { it.uniqueId == editedEntry.uniqueId }
+            if (position != -1) {
+                entries = entries.toMutableList().apply {
+                    set(position, editedEntry)
+                }
+                notifyItemChanged(position)
+            }
         }
-
-        dialog.setContentView(view)
-        dialog.show()
     }
+
+
 
     fun showTimerDialog(context: Context,  entry: TimesheetData, position: Int) {
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -227,6 +208,28 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                 database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
                 val timesheetEntryRef = database.child("Timesheet Entries").child(entry.uniqueId.toString())
 
+                // Get a reference to the user's totalTimeTracked path
+                val totalTimeTrackedRef = database.child("totalTimeTracked")
+
+                // Get the current date in the format "YYYY-MM-DD"
+                val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+
+
+                // Check if an entry for the current day already exists in totalTimeTracked
+                totalTimeTrackedRef.child(currentDate).addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        if (!dataSnapshot.exists()) {
+                            // Entry for the current day doesn't exist, create a new entry
+                            totalTimeTrackedRef.child(currentDate).child("Time").setValue(0L)
+                        }
+
+                    }
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        Log.e("Firebase", "Failed to check totalTimeTracked for the current day", databaseError.toException())
+                    }
+                })
+
                 timesheetEntryRef.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
                         val existingElapsedTime =
@@ -240,7 +243,22 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                                     "Firebase",
                                     "Successfully updated elapsedTime for uniqueId $entry.uniqueId"
                                 )
+
+                                // Update totalTimeTracked for the current day
+                                totalTimeTrackedRef.child(currentDate).child("Time")
+                                    .setValue(ServerValue.increment(elapsedTime))
+                                    .addOnSuccessListener {
+                                        Log.d(
+                                            "Firebase",
+                                            "Successfully updated totalTimeTracked for the current day"
+                                        )
+
+
+                                    }
                             }
+
+
+
                             .addOnFailureListener { e ->
                                 Log.e(
                                     "Firebase",
@@ -363,7 +381,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                 val categoryRef = database.child("CategoryTimes").child(category)
 
                 // Save the total time to Firebase
-                categoryRef.child("tolTime").setValue(totalTime)
+                categoryRef.child("totalTime").setValue(totalTime)
                     .addOnSuccessListener {
                         Log.d("CategoryData", "Successfully saved totalTime for category $category: $totalTime")
                     }

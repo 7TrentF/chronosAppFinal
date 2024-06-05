@@ -18,8 +18,15 @@ import java.util.concurrent.TimeUnit
 import android.graphics.Color
 import android.graphics.Typeface
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageButton
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.mikephil.charting.animation.Easing
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.data.PieData
@@ -32,10 +39,20 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class Report : AppCompatActivity() {
     lateinit var pieChart: PieChart
+    private val viewsToRemove = mutableListOf<View>()
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: CategoryTimeAdapter
+    private lateinit var clearButton: ImageButton
+    private lateinit var viewContainer: ConstraintLayout
 
+    private lateinit var CategoryDisplayButton: Button
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -67,15 +84,38 @@ class Report : AppCompatActivity() {
         pieChart.setEntryLabelColor(Color.WHITE)
         pieChart.setEntryLabelTextSize(12f)
 
+
+        val categoryContainer = findViewById<FrameLayout>(R.id.category_container)
+        val pieChartContainer = findViewById<FrameLayout>(R.id.pie_chart_container)
+
+        val pieChartView = findViewById<PieChart>(R.id.pieChart)
+
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        // Initialize views
+        recyclerView = findViewById(R.id.recyclerView)
+        viewContainer = findViewById(R.id.viewContainer)
+        clearButton = findViewById(R.id.clearButton)
+
+        CategoryDisplayButton = findViewById(R.id.CategoryDisplayButton)
+
+        clearButton.setOnClickListener {
+            viewContainer.visibility = View.GONE
+        }
+
+        CategoryDisplayButton.setOnClickListener {
+            viewContainer.visibility = View.VISIBLE
+        }
+
         val currentUser = FirebaseAuth.getInstance().currentUser
         // Check if the user is authenticated
         currentUser?.let { user ->
 
 
-
-
             // Retrieve total times for each category from Firebase
-            val database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
+            val database =
+                FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
             val categoryTimesRef = database.child("CategoryTimes")
             categoryTimesRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -98,62 +138,18 @@ class Report : AppCompatActivity() {
                         ) // Use the total time as the value
                     }
 
-
-// Create TextViews for each category and its total time
-                    val categoryContainer = findViewById<FrameLayout>(R.id.category_container)
-                    var topPadding = 30 // Initial top padding
-
-                    for ((category, totalTime) in categories) {
-                        // Convert milliseconds to hours, minutes, and seconds
+// Convert the data to a list of CategoryTime
+                    val categoryTimeList = categories.map { (category, totalTime) ->
                         val hours = TimeUnit.MILLISECONDS.toHours(totalTime)
                         val minutes = TimeUnit.MILLISECONDS.toMinutes(totalTime) % 60
                         val seconds = TimeUnit.MILLISECONDS.toSeconds(totalTime) % 60
-
-                        // Format the time as a string in HH:mm:ss format
                         val formattedTime = String.format("%02d:%02d:%02d", hours, minutes, seconds)
-
-
-// Header TextView for "Time spent on each category"
-                        val headerTextView = TextView(this@Report).apply {
-                            text = "Time spent on each category"
-                            setTextColor(Color.WHITE) // Set the text color to white
-                            textSize = 18f // Set the text size larger for emphasis
-                            setTypeface(typeface, Typeface.BOLD) // Make the text bold for emphasis
-
-                            layoutParams = FrameLayout.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.WRAP_CONTENT
-                            ).apply {
-
-                                topPadding = 5 // Start with a bit of padding from the top
-                                // No need for horizontal padding here since it's a single line header
-                            }
-                        }
-
-
-                        // Create a TextView for the category and its total time
-                        val textView = TextView(this@Report).apply {
-                            // Combine category name and formatted time with a space in between
-                            text =
-                                "Category: $category $formattedTime" // Display category name followed by the formatted time
-                            setTextColor(Color.WHITE) // Set the text color to white
-                            textSize = 16f // Set the text size
-
-                            layoutParams = FrameLayout.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.WRAP_CONTENT
-                            ).apply {
-                                marginStart = 30 // Add some margin to the start
-                                topPadding = topPadding // Use the dynamic top padding
-                                // Add horizontal padding
-                                setMargins(marginStart, topPadding, 30, 0) // Left, top, right, bottom
-                            }
-                        }
-                        textView.setPadding(0, topPadding, 0, 0) // Apply padding to the top
-
-                        categoryContainer.addView(textView)
-                        topPadding += 40 // Increase the top padding for the next TextView
+                        CategoryTime(category, formattedTime)
                     }
+
+                    adapter = CategoryTimeAdapter(categoryTimeList)
+                    recyclerView.adapter = adapter
+
 
                     // Assign colors to each category
                     val colors: ArrayList<Int> = ArrayList()
@@ -193,6 +189,7 @@ class Report : AppCompatActivity() {
                     pieChart.highlightValues(null)
                     pieChart.invalidate()
 
+
                 }
 
                 override fun onCancelled(databaseError: DatabaseError) {
@@ -203,27 +200,73 @@ class Report : AppCompatActivity() {
                     )
                 }
             })
+
+// Assuming totalTimeTextView is the TextView in which you want to display the total time tracked
+            val totalTimeTextView = findViewById<TextView>(R.id.totalTimeTextView)
+
+// Get a reference to the user's totalTimeTracked path
+
+            // Get a reference to the user's totalTimeTracked path
+            val totalTimeTrackedRef = database.child("totalTimeTracked")
+
+            // Get the current date in the format "yyyy-MM-dd"
+            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+            // Retrieve the total time tracked for the current date
+            val totalTimeRef = totalTimeTrackedRef.child(currentDate).child("Time")
+            totalTimeRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val totalMilliseconds = dataSnapshot.getValue(Long::class.java) ?: 0
+                    Log.d("Totaltimz", "Total Time Tracked: $totalMilliseconds milliseconds")
+
+                    // Convert total time from milliseconds to hours, minutes, and seconds
+                    val totalHours = totalMilliseconds / (1000 * 60 * 60)
+                    val totalMinutes = (totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60)
+                    val totalSeconds = (totalMilliseconds % (1000 * 60)) / 1000
+
+                    // Format the total time as a string
+                    val formattedTotalTime = String.format(Locale.getDefault(), "%02d:%02d:%02d", totalHours, totalMinutes, totalSeconds)
+
+                    // Set the formatted total time to the TextView
+                    totalTimeTextView.text = "Total Time Tracked: $formattedTotalTime"
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve totalTimeTracked", databaseError.toException())
+                }
+            })
         }
+    }
 
-        val projectCheckbox = findViewById<CheckBox>(R.id.projectCheckbox)
-        val categoryCheckbox = findViewById<CheckBox>(R.id.categoryCheckbox)
 
-                projectCheckbox.setOnCheckedChangeListener { _, isChecked ->
-                    if (isChecked) {
-                        // Handle project checkbox selection
-                    } else {
-                        // Handle project checkbox deselection
-                    }
-                }
 
-                categoryCheckbox.setOnCheckedChangeListener { _, isChecked ->
-                    if (isChecked) {
-                        // Handle category checkbox selection
-                    } else {
-                        // Handle category checkbox deselection
-                    }
-                }
+    private fun createStyledTextView(context: Context, text: String, topPadding: Int): TextView {
+        return TextView(context).apply {
+            this.text = text
+            setTextColor(ContextCompat.getColor(context, R.color.white))
+            textSize = 16f
+
+            layoutParams = ViewGroup.MarginLayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(30, topPadding, 30, 0)
             }
+
+            setPadding(0, topPadding, 0, 0)
+        }
+    }
+
+    // Usage example
+    fun addCategoryTextViews(categoryContainer: ViewGroup, categories: List<String>, formattedTimes: List<String>) {
+        var topPadding = 40
+        categories.zip(formattedTimes).forEach { (category, formattedTime) ->
+            val textView = createStyledTextView(categoryContainer.context, "Category: $category $formattedTime", topPadding)
+            categoryContainer.addView(textView)
+            topPadding += 40
+        }
+    }
+
 
 
 

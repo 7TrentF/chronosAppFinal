@@ -289,31 +289,57 @@
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cvTemp"
-        android:layout_width="166dp"
-        android:layout_height="52dp"
-        android:layout_marginTop="528dp"
+        android:layout_width="260dp"
+        android:layout_height="110dp"
+        android:layout_marginTop="488dp"
+        android:backgroundTint="@color/black"
         android:paddingTop="?attr/actionBarSize"
         app:cardCornerRadius="10dp"
-        android:backgroundTint="@color/black"
         app:cardElevation="5dp"
 
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/cvProject">
 
-        <Button
-            android:id="@+id/redButton"
-            android:layout_width="142dp"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="center"
-            android:background="@color/red"
-            android:textStyle="bold"
-            android:padding="16dp"
-            android:text="Delete"
-            android:textColor="@android:color/white"
-            android:textSize="18sp" />
+            android:background="@color/black"
+            android:padding="10dp">
 
+            <Button
+                android:id="@+id/saveButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginEnd="10dp"
+                android:text="Save"
+                android:textColor="@color/black"
+                android:background="@color/lightGreen"
+                app:layout_constraintEnd_toStartOf="@+id/redButton"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <Button
+                android:id="@+id/redButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginEnd="38dp"
+                android:background="@color/red"
+                android:padding="16dp"
+                android:text="Delete"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/saveButton"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 
 

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- edit_daily_goal.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/black"
+    android:padding="16dp">
+
+
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:textColor="@color/white"
+        android:text="The daily Goal has been set for today."/>
+
+
+    <TextView
+        android:id="@+id/textViewCurrentGoal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:text="Current Goals:"
+        android:paddingTop="16dp"/>
+
+    <TextView
+        android:id="@+id/tvCurrentMin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textColor="@color/white"
+        android:paddingBottom="16dp"/>
+
+
+    <TextView
+
+        android:id="@+id/tvCurrentMax"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp"
+        android:textColor="@color/white" />
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Edit the goals below:"
+        android:textColor="@color/white"
+        android:textSize="18dp" />
+
+    <EditText
+        android:id="@+id/etMinGoal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Min Goal"
+        android:textColor="@color/white"/>
+
+    <EditText
+        android:id="@+id/etMaxGoal"
+        android:layout_width="match_parent"
+        android:textColor="@color/white"
+        android:layout_height="wrap_content"
+        android:hint="Enter Max Goal"/>
+
+
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="127dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/filter_button"
+        android:text="Save Changes"
+        android:textColor="@color/black" />
+</LinearLayout>

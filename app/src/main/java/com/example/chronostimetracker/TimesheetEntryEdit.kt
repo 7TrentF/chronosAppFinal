@@ -17,29 +17,28 @@ import java.util.Locale
 import android.content.Intent
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import java.util.*
 
 class TimesheetEntryEdit : AppCompatActivity() {
-    private lateinit var startDatePicker: DatePicker
-    private lateinit var endDatePicker: DatePicker
-    private lateinit var startTimePicker: TimePickerHandler
-    private lateinit var EndTimePicker: TimePickerHandler
-    private lateinit var minHours: EditText
-    private lateinit var maxHours: EditText
-    private lateinit var etProjectName: EditText
-    private lateinit var etCategory: EditText
-    private lateinit var etDescription: EditText
-    private lateinit var imgUserImage: ImageView
+     lateinit var startDatePicker: DatePicker
+      lateinit var endDatePicker: DatePicker
+     lateinit var startTimePicker: TimePickerHandler
+     lateinit var EndTimePicker: TimePickerHandler
+     lateinit var minHours: EditText
+     lateinit var maxHours: EditText
+     lateinit var etProjectName: EditText
+     lateinit var etCategory: EditText
+     lateinit var etDescription: EditText
+     lateinit var imgUserImage: ImageView
     private lateinit var btnPickImg: Button
-    private var uniqueId: Int = -1 // Initialize uniqueId with a default value
+     var uniqueId: Int = -1 // Initialize uniqueId with a default value
     private lateinit var camera: Camera
 
     // Firebase database reference
-    private lateinit var database: DatabaseReference
+     lateinit var database: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -178,17 +177,12 @@ class TimesheetEntryEdit : AppCompatActivity() {
         }
     }
 
-    private fun saveDataToFirebase() {
+    // Save the changes back to Firebase
+    fun saveEditsToFirebase(uniqueKey: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->
-            // Get a reference to the user's entry path
             val userEntriesRef = database.child("user_entries").child(user.uid)
-
-            // Create a reference to the Timesheet Entries child under the user's path
             val timesheetEntriesRef = userEntriesRef.child("Timesheet Entries")
-
-            // Generate a unique key for the timesheet entry
-            val uniqueKey = timesheetEntriesRef.push().key ?: return
 
             // Retrieve input data
             val projectName = etProjectName.text.toString()
@@ -201,43 +195,30 @@ class TimesheetEntryEdit : AppCompatActivity() {
             val minHoursValue = minHours.text.toString().toInt()
             val maxHoursValue = maxHours.text.toString().toInt()
             val creationTime = System.currentTimeMillis()
+
             val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
             val formattedDate = sdf.format(Date(creationTime))
 
-            // Retrieve and encode image if available
             val bitmap = (imgUserImage.drawable as BitmapDrawable).bitmap
             val encodedImage = camera.encodeImage(bitmap)
 
-            // Create a TimesheetData object
             val entry = TimesheetData(
                 uniqueKey, projectName, category, description, startTime, startDate,
                 endTime, endDate, minHoursValue, maxHoursValue, encodedImage, creationTime
             )
 
-            // Save the entry under the Timesheet Entries child
             timesheetEntriesRef.child(uniqueKey).setValue(entry)
-                .addOnCompleteListener(OnCompleteListener<Void> { task ->
+                .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        Log.d("TimesheetEntry", "Data saved successfully")
+                        Log.d("TimesheetEntry", "Data updated successfully")
+                        finish() // Close the activity
                     } else {
-                        Log.e("TimesheetEntry", "Failed to save data", task.exception)
+                        Log.e("TimesheetEntry", "Failed to update data", task.exception)
                     }
-                })
-
-            // Log the data for debugging purposes
-            Log.d("TimesheetEntry", "Project Name: $projectName")
-            Log.d("TimesheetEntry", "Category: $category")
-            Log.d("TimesheetEntry", "Description: $description")
-            Log.d("TimesheetEntry", "Start Time: $startTime")
-            Log.d("TimesheetEntry", "Start Date: $startDate")
-            Log.d("TimesheetEntry", "End Time: $endTime")
-            Log.d("TimesheetEntry", "End Date: $endDate")
-            Log.d("TimesheetEntry", "Min Hours: $minHoursValue")
-            Log.d("TimesheetEntry", "Max Hours: $maxHoursValue")
-            Log.d("TimesheetEntry", "Image: $encodedImage")
-            Log.d("TimesheetEntry", "Creation Time: $formattedDate")
+                }
         }
     }
+
 
     private fun getCurrentDate(): String {
         val calendar = Calendar.getInstance()
