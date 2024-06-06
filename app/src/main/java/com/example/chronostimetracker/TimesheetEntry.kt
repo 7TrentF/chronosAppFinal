@@ -1,6 +1,5 @@
 package com.example.chronostimetracker
 
-// Updated version
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.util.Log
@@ -28,6 +27,7 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import java.util.*
 
+
 class TimesheetEntry : AppCompatActivity() {
 
     private lateinit var startDatePicker: DatePicker
@@ -37,7 +37,7 @@ class TimesheetEntry : AppCompatActivity() {
     private lateinit var etProjectName: EditText
     private lateinit var etCategory: EditText
     private lateinit var etDescription: EditText
-   private lateinit var imgUserImage: ImageButton
+    private lateinit var imgUserImage: ImageButton
 
     private lateinit var btnPickImg: Button
     private var uniqueId: Int = -1 // Initialize uniqueId with a default value
@@ -95,21 +95,23 @@ class TimesheetEntry : AppCompatActivity() {
         val hoursValidator = HoursValidator(this)
 
         btnCreate.setOnClickListener {
-            val startTime = startTimePicker.getTimeAsLocalTime()
-            val endTime = EndTimePicker.getTimeAsLocalTime()
-
-            // Validate start and end times
-            startTimePicker.validateStartEndTime(startTime, endTime)
 
 
-                SaveCategory()
-                saveDataToFirebase()
-                // Start TimesheetEntryDisplayActivity and pass the unique ID
-                val intent = Intent(this, ListOfEntries::class.java)
-                intent.putExtra("uniqueId", uniqueId)
-                startActivity(intent)
+            // Check if all fields are filled
+            if (!validateFields()) {
+                // Some fields are empty, show an error message if needed
+                return@setOnClickListener
+            }
 
+            // All fields are filled and validated, proceed with saving data
+            SaveCategory()
+            saveDataToFirebase()
+
+            // Start ListOfEntries activity
+            val intent = Intent(this, ListOfEntries::class.java)
+            startActivity(intent)
         }
+
 
         camera = Camera(this)
         imgUserImage = findViewById(R.id.btnAddImage)
@@ -159,15 +161,61 @@ class TimesheetEntry : AppCompatActivity() {
         }
     }
 
+
+
+    private fun validateFields(): Boolean {
+        val projectName = etProjectName.text.toString()
+        val category = etCategory.text.toString()
+        val description = etDescription.text.toString()
+        val startTime = startTimePicker.getTime()
+        val startDate = startDatePicker.getDate()
+        val endTime = EndTimePicker.getTime()
+        val endDate = endDatePicker.getDate()
+
+        // Check if any required field is empty
+        if (projectName.isEmpty() || category.isEmpty() || description.isEmpty() ||
+            startTime.isEmpty() || startDate.isEmpty() || endTime.isEmpty() || endDate.isEmpty()) {
+            // Show an alert dialog indicating that all fields must be filled
+            AlertDialog.Builder(this@TimesheetEntry)
+                .setTitle("Missing Information")
+                .setMessage("Please enter all fields.")
+                .setPositiveButton("OK") { dialog, _ ->
+                    // Dismiss the dialog
+                    dialog.dismiss()
+                }
+                .show()
+            return false
+        }
+
+        // Check if an image is set
+        if (!isImageSet(imgUserImage)) {
+            // Show an alert dialog indicating that an image must be selected
+            AlertDialog.Builder(this)
+                .setTitle("Missing Image")
+                .setMessage("Please select an image.")
+                .setPositiveButton("OK") { dialog, _ ->
+                    // Dismiss the dialog
+                    dialog.dismiss()
+                }
+                .show()
+            return false
+        }
+
+        return true
+    }
+
     // Method to handle camera result
 
     // Method to check if an image is set on the ImageButton
     private fun isImageSet(imageButton: ImageButton): Boolean {
-        // Get the current drawable from the ImageButton
         val drawable = imageButton.drawable
-        // Check if the drawable is not null and is not the placeholder
-        return drawable != null && drawable !is BitmapDrawable && drawable !is VectorDrawable
+        return drawable is BitmapDrawable
     }
+
+
+
+
+
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         camera.handlePermissionResult(requestCode, grantResults)
@@ -227,8 +275,8 @@ class TimesheetEntry : AppCompatActivity() {
             val startDate = startDatePicker.getDate()
             val endTime = EndTimePicker.getTime()
             val endDate = endDatePicker.getDate()
-           // val minHoursValue = minHours.text.toString().toInt()
-           // val maxHoursValue = maxHours.text.toString().toInt()
+            // val minHoursValue = minHours.text.toString().toInt()
+            // val maxHoursValue = maxHours.text.toString().toInt()
             val creationTime = System.currentTimeMillis()
             val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
             val formattedDate = sdf.format(Date(creationTime))

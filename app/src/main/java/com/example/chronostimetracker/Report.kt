@@ -252,7 +252,7 @@ class Report : AppCompatActivity() {
                     val formattedTotalTime = String.format(Locale.getDefault(), "%02d:%02d:%02d", totalHours, totalMinutes, totalSeconds)
 
                     // Set the formatted total time to the TextView
-                    totalTimeTextView.text = "Total Time Tracked: $formattedTotalTime"
+                    totalTimeTextView.text = "Total Time Tracked today: $formattedTotalTime"
                 }
 
                 override fun onCancelled(databaseError: DatabaseError) {

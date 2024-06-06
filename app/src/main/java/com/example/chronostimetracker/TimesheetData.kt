@@ -10,7 +10,6 @@ data class TimesheetData(
     var startDate: String = "",
     var endTime: String = "",
     var endDate: String = "",
-
     var imageData: String? = "",
     var creationTime: Long = 0,
     var elapsedTime: Long = 0

@@ -168,6 +168,8 @@ class ListOfEntries : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+
+
                 else -> false
             }
         }

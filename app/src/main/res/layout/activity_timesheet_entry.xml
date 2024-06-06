@@ -122,8 +122,8 @@
 
         <ImageButton
             android:id="@+id/btnAddImage"
-            android:layout_width="98dp"
-            android:layout_height="83dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:src="@drawable/img_placeholder"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
@@ -155,27 +155,26 @@
                 android:id="@+id/tvEnd"
                 android:layout_width="79dp"
                 android:layout_height="37dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="28dp"
+                android:layout_marginStart="28dp"
+                android:layout_marginTop="44dp"
                 android:text="@string/end"
                 android:textColor="@color/yellow"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/btnStartTime" />
 
             <Button
                 android:id="@+id/btnEndTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
-                android:layout_marginEnd="48dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="4dp"
                 android:backgroundTint="@color/black"
                 android:onClick="openEndTimePicker"
                 android:text="@string/_00_01"
                 android:textColor="@color/white"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvEnd" />
 
             <Button
@@ -183,26 +182,25 @@
                 style="?android:attr/spinnerStyle"
                 android:layout_width="107dp"
                 android:layout_height="43dp"
-                android:layout_marginTop="32dp"
-                android:layout_marginEnd="4dp"
+                android:layout_marginTop="96dp"
                 android:onClick="openEndDatePicker"
                 android:text="@string/_04_21"
                 android:textColor="@color/white"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/btnEndTime" />
+                app:layout_constraintHorizontal_bias="0.901"
+                app:layout_constraintStart_toEndOf="@+id/btnEndTime"
+                app:layout_constraintTop_toBottomOf="@+id/btnStartDate" />
 
             <Button
                 android:id="@+id/btnStartTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="28dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="4dp"
                 android:backgroundTint="@color/black"
                 android:onClick="openStartTimePicker"
                 android:text="@string/_00_00"
                 android:textColor="@color/white"
-                app:layout_constraintEnd_toStartOf="@+id/btnEndTime"
-                app:layout_constraintHorizontal_bias="0.067"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvStart" />
 
@@ -210,13 +208,13 @@
                 android:id="@+id/tvStart"
                 android:layout_width="65dp"
                 android:layout_height="42dp"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="36dp"
                 android:text="@string/start"
                 android:textColor="@color/yellow"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@+id/tvEnd"
-                app:layout_constraintHorizontal_bias="0.173"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.095"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -225,24 +223,24 @@
                 style="?android:attr/spinnerStyle"
                 android:layout_width="100dp"
                 android:layout_height="49dp"
-                android:layout_marginStart="56dp"
-                android:layout_marginTop="28dp"
+                android:layout_marginTop="76dp"
                 android:onClick="openStartDatePicker"
                 android:text="@string/_04_20"
                 android:textColor="@color/white"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/btnStartTime" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.866"
+                app:layout_constraintStart_toEndOf="@+id/btnStartTime"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <View
                 android:id="@+id/viewTwo"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:layout_marginTop="52dp"
                 android:background="@android:color/black"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/btnStartDate" />
+                app:layout_constraintTop_toBottomOf="@+id/btnEndTime" />
 
             <TextView
                 android:id="@+id/tvDescription"
@@ -280,10 +278,10 @@
                 android:id="@+id/btnCreate"
                 android:layout_width="138dp"
                 android:layout_height="33dp"
+                android:layout_marginTop="25dp"
                 android:background="@drawable/yellow_border"
                 android:text="@string/create"
                 android:textColor="@color/white"
-                android:layout_marginTop="25dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/etDescription" />

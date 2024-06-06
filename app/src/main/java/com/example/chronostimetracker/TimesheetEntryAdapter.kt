@@ -16,13 +16,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -59,6 +57,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         val timerButton: Button = itemView.findViewById(R.id.timerButton)
         val timerTextView: TextView = itemView.findViewById(R.id.timerTextView)
         val TimesheetDate: TextView = itemView.findViewById(R.id.topTextView)
+
         val currentUser = FirebaseAuth.getInstance().currentUser // Fetch the currently logged-in user
     }
 
@@ -112,9 +111,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         }
 
 
-
-
-
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->
             // Fetch the elapsed time and creation time from Firebase
@@ -161,7 +157,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         }
 
         holder.timerButton.setOnClickListener {
-           // val uniqueId: String? = entry.uniqueId
+            // val uniqueId: String? = entry.uniqueId
             entry.uniqueId
             showTimerDialog(holder.itemView.context, entry, position)
         }
@@ -185,6 +181,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                     notifyItemChanged(position)
                 }
             },
+
             onDelete = { entryId ->
                 editHandler.deleteEntry(entryId)
                 // Remove the entry from the list and notify the adapter
@@ -207,9 +204,14 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         currentUser?.let { user ->
             val dialog = Dialog(context)
             dialog.setContentView(R.layout.dialog_timer)
+            dialog.setCancelable(false) // Prevent dialog from being canceled by clicking outside
 
             val timerTextView = dialog.findViewById<TextView>(R.id.timerTextView)
-            val stopButton = dialog.findViewById<Button>(R.id.stopButton)
+            val stopButton = dialog.findViewById<ImageButton>(R.id.stopButton)
+            val timerProjectName = dialog.findViewById<TextView>(R.id.projectTextView)
+            val timerDescription= dialog.findViewById<TextView>(R.id.descriptionTextView)
+
+
 
             var startTime: Long = System.currentTimeMillis() // Start the timer immediately
             var isTimerRunning = true // Timer is running by default
@@ -222,6 +224,8 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                         val elapsedTime = System.currentTimeMillis() - startTime
                         val formattedTime = formatElapsedTime(elapsedTime)
                         timerTextView.text = formattedTime
+                        timerProjectName.text = entry.projectName
+                        timerDescription.text = entry.description
                         timerHandler.postDelayed(this, 1000)
                     }
                 }
@@ -236,8 +240,9 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                 // Set the formatted time based on the new total elapsed time
                 val formattedTime = formatElapsedTime(elapsedTime)
                 // Set the text of timerTextView with the formatted time
-                timerTextView.text = formattedTime
-
+                timerHandler.post {
+                    timerTextView.text = formattedTime
+                }
 
                 database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
                 val timesheetEntryRef = database.child("Timesheet Entries").child(entry.uniqueId.toString())
@@ -284,13 +289,8 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                                             "Firebase",
                                             "Successfully updated totalTimeTracked for the current day"
                                         )
-
-
                                     }
                             }
-
-
-
                             .addOnFailureListener { e ->
                                 Log.e(
                                     "Firebase",

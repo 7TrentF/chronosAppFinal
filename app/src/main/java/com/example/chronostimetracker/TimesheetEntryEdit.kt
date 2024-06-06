@@ -1,5 +1,8 @@
 package com.example.chronostimetracker
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.util.Log
@@ -15,30 +18,28 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.util.Base64
+import android.view.LayoutInflater
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import java.util.*
 
 class TimesheetEntryEdit : AppCompatActivity() {
-     lateinit var startDatePicker: DatePicker
-      lateinit var endDatePicker: DatePicker
-     lateinit var startTimePicker: TimePickerHandler
-     lateinit var EndTimePicker: TimePickerHandler
-     lateinit var minHours: EditText
-     lateinit var maxHours: EditText
-     lateinit var etProjectName: EditText
-     lateinit var etCategory: EditText
-     lateinit var etDescription: EditText
-     lateinit var imgUserImage: ImageView
-    private lateinit var btnPickImg: Button
-     var uniqueId: Int = -1 // Initialize uniqueId with a default value
+
+     lateinit var userImage: ImageButton
+
     private lateinit var camera: Camera
 
     // Firebase database reference
-     lateinit var database: DatabaseReference
+    // lateinit var database: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,78 +51,19 @@ class TimesheetEntryEdit : AppCompatActivity() {
             insets
 
         }
-
+         userImage= findViewById(R.id.userImage)
 
         // Initialize Firebase
-        database = FirebaseDatabase.getInstance().reference
-
-
-        // Start and end time buttons
-        val startTimeButton: Button = findViewById(R.id.tvStartTime)
-        val endTimeButton: Button = findViewById(R.id.tvEndTime)
-        // Start and End date buttons
-        val startDateButton: Button = findViewById(R.id.tvStartDate)
-        val endDateButton: Button = findViewById(R.id.tvEndDate)
-
-        etProjectName = findViewById(R.id.etProjectName)
-        etCategory = findViewById(R.id.etCategory)
-        etDescription = findViewById(R.id.tvDescription)
-
-        // Initialize TimePickers for buttons
-        startTimePicker = TimePickerHandler(this, startTimeButton)
-        EndTimePicker = TimePickerHandler(this, endTimeButton)
-
-        // Initialize DatePickers for buttons
-        startDatePicker = DatePicker(this, startDateButton)
-        endDatePicker = DatePicker(this, endDateButton)
-
-        // Min and Max hours
-        maxHours = findViewById(R.id.tvMaxTime)
-        minHours = findViewById(R.id.tvMinTime)
-
-        // Set current date as default text for buttons
-        val currentDate = getCurrentDate()
-        startDateButton.text = currentDate
-        endDateButton.text = currentDate
-
-        val hoursValidator = HoursValidator(this)
-
-        /*
-        btnCreate.setOnClickListener {
-            val startTime = startTimePicker.getTimeAsLocalTime()
-            val endTime = EndTimePicker.getTimeAsLocalTime()
-
-            // Validate start and end times
-            startTimePicker.validateStartEndTime(startTime, endTime)
-
-            // Validate minHours and maxHours before proceeding
-            if (hoursValidator.validateMinMaxHours(
-                    minHours.text.toString(),
-                    maxHours.text.toString()
-                )) {
-                SaveCategory()
-                saveDataToFirebase()
-                // Start TimesheetEntryDisplayActivity and pass the unique ID
-                val intent = Intent(this, ListOfEntries::class.java)
-                intent.putExtra("uniqueId", uniqueId)
-                startActivity(intent)
-            }
-        }
-        */
-
+       // database = FirebaseDatabase.getInstance().reference
 
         camera = Camera(this)
-        imgUserImage = findViewById(R.id.userImage)
-       // btnPickImg = findViewById(R.id.btnPickImg)
 
-        btnPickImg.setOnClickListener {
-            //camera.openCamera(imgUserImage)
-            camera.showImagePickerOptions(imgUserImage)
-        }
 
-        imgUserImage.setOnClickListener {
-            // Get the current image from the ImageView
-            val drawable = imgUserImage.drawable
+        userImage.setOnClickListener {
+            camera.showImagePickerOptions(userImage)
+
+
+            val drawable = userImage.drawable
             if (drawable is BitmapDrawable) {
                 val bitmap = drawable.bitmap
                 // Inflate the dialog layout
@@ -135,8 +77,140 @@ class TimesheetEntryEdit : AppCompatActivity() {
                     .create()
                 dialog.show()
             }
+
         }
     }
+
+    fun showEditDialog(entry: TimesheetData, onSave: (TimesheetData) -> Unit, onDelete: (String) -> Unit) {
+        val dialog = BottomSheetDialog(this)
+        val view = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_timesheet, null)
+
+        val projectNameEditText: EditText = view.findViewById(R.id.tvProjectName)
+        val categoryEditText: EditText = view.findViewById(R.id.tvCategory)
+        val startTimeButton: Button = view.findViewById(R.id.tvStartTime)
+        val endTimeButton: Button = view.findViewById(R.id.tvEndTime)
+        val startDateButton: Button = view.findViewById(R.id.tvStartDate)
+        val endDateButton: Button = view.findViewById(R.id.tvEndDate)
+        val descriptionEditText: EditText = view.findViewById(R.id.tvDescription)
+        val userImage: ImageButton = view.findViewById(R.id.userImage)
+
+        // Set the existing values
+        projectNameEditText.setText(entry.projectName)
+        categoryEditText.setText(entry.category)
+        descriptionEditText.setText(entry.description)
+        startTimeButton.text = entry.startTime
+        endTimeButton.text = entry.endTime
+        startDateButton.text = entry.startDate
+        endDateButton.text = entry.endDate
+
+        if (entry.imageData != null) {
+            val decodedString = Base64.decode(entry.imageData, Base64.DEFAULT)
+            val decodedBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+            userImage.setImageBitmap(decodedBitmap)
+        } else {
+            userImage.setImageResource(R.drawable.default_image)
+        }
+
+        // Show camera when image button is clicked
+
+
+        // Show time picker dialog when the button is clicked
+        startTimeButton.setOnClickListener {
+            showTimePickerDialog(it, entry, "start")
+        }
+
+        endTimeButton.setOnClickListener {
+            showTimePickerDialog(it, entry, "end")
+        }
+
+        // Show date picker dialog when the button is clicked
+        startDateButton.setOnClickListener {
+            showDatePickerDialog(it, entry, "start")
+        }
+
+        endDateButton.setOnClickListener {
+            showDatePickerDialog(it, entry, "end")
+        }
+
+        // Handle save button click
+        val saveButton: Button = view.findViewById(R.id.saveButton)
+        saveButton.setOnClickListener {
+            // Update the entry with edited values
+            entry.projectName = projectNameEditText.text.toString()
+            entry.category = categoryEditText.text.toString()
+            entry.description = descriptionEditText.text.toString()
+
+            // Call the onSave callback to save the edited entry
+            onSave(entry)
+            dialog.dismiss()
+        }
+
+        val  deleteButton:Button = view.findViewById(R.id.deleteButton)
+
+        // Handle delete button click
+        deleteButton.setOnClickListener {
+            onDelete(entry.uniqueId.toString())
+            dialog.dismiss()
+        }
+        dialog.setContentView(view)
+        dialog.show()
+    }
+
+
+    private fun showTimePickerDialog(view: View, entry: TimesheetData, timeType: String) {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+
+        val timePickerDialog = TimePickerDialog(this, { _, selectedHour, selectedMinute ->
+            val selectedTime = String.format("%02d:%02d", selectedHour, selectedMinute)
+
+            when (timeType) {
+                "start" -> {
+                    (view as Button).text = selectedTime
+                    entry.startTime = selectedTime
+                }
+                "end" -> {
+                    (view as Button).text = selectedTime
+                    entry.endTime = selectedTime
+                }
+            }
+        }, hour, minute, true)
+
+        timePickerDialog.show()
+    }
+
+    private fun showDatePickerDialog(view: View, entry: TimesheetData, dateType: String) {
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+        val datePickerDialog = DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
+            val selectedDate = Calendar.getInstance().apply {
+                set(selectedYear, selectedMonth, selectedDay)
+            }
+
+            // Format date as "Month Day, Year"
+            val dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+            val formattedDate = dateFormat.format(selectedDate.time)
+
+            when (dateType) {
+                "start" -> {
+                    (view as Button).text = formattedDate
+                    entry.startDate = formattedDate
+                }
+                "end" -> {
+                    (view as Button).text = formattedDate
+                    entry.endDate = formattedDate
+                }
+            }
+        }, year, month, day)
+
+        datePickerDialog.show()
+    }
+
+
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -147,103 +221,7 @@ class TimesheetEntryEdit : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         camera.handleActivityResult(requestCode, resultCode, data)
     }
-    private fun SaveCategory() {
-        val categoryText = etCategory.text.toString()
-
-        // Validate the category input
-        if (categoryText.isEmpty()) {
-            Toast.makeText(this, "Category cannot be empty", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        currentUser?.let { user ->
-            // Initialize Firebase database reference
-            val database = FirebaseDatabase.getInstance()
-            val categoryRef = database.getReference("user_entries").child(user.uid).child("categoryData")
-
-            // Generate a unique key for the category
-            val uniqueCategoryKey = categoryRef.push().key ?: return
-
-            // Save the category to Firebase
-            categoryRef.child(uniqueCategoryKey).setValue(categoryText).addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Toast.makeText(this, "Category saved successfully", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "Failed to save category", Toast.LENGTH_SHORT).show()
-                    Log.e("FirebaseError", "Error saving category: ${task.exception?.message}")
-                }
-            }
-        }
-    }
-
-    // Save the changes back to Firebase
-    fun saveEditsToFirebase(uniqueKey: String) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        currentUser?.let { user ->
-            val userEntriesRef = database.child("user_entries").child(user.uid)
-            val timesheetEntriesRef = userEntriesRef.child("Timesheet Entries")
-
-            // Retrieve input data
-            val projectName = etProjectName.text.toString()
-            val category = etCategory.text.toString()
-            val description = etDescription.text.toString()
-            val startTime = startTimePicker.getTime()
-            val startDate = startDatePicker.getDate()
-            val endTime = EndTimePicker.getTime()
-            val endDate = endDatePicker.getDate()
-            val minHoursValue = minHours.text.toString().toInt()
-            val maxHoursValue = maxHours.text.toString().toInt()
-            val creationTime = System.currentTimeMillis()
-
-            val sdf = SimpleDateFormat("MM/dd/yyyy", Locale.getDefault())
-            val formattedDate = sdf.format(Date(creationTime))
-
-            val bitmap = (imgUserImage.drawable as BitmapDrawable).bitmap
-            val encodedImage = camera.encodeImage(bitmap)
-
-            val entry = TimesheetData(
-                uniqueKey, projectName, category, description, startTime, startDate,
-                endTime, endDate, encodedImage, creationTime
-            )
-
-            timesheetEntriesRef.child(uniqueKey).setValue(entry)
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        Log.d("TimesheetEntry", "Data updated successfully")
-                        finish() // Close the activity
-                    } else {
-                        Log.e("TimesheetEntry", "Failed to update data", task.exception)
-                    }
-                }
-        }
-    }
 
 
-    private fun getCurrentDate(): String {
-        val calendar = Calendar.getInstance()
-        val year = calendar.get(Calendar.YEAR)
-        val month = calendar.get(Calendar.MONTH) + 1 // Month is 0-based
-        val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-        // Format the date as "MM/dd"
-        val dateFormat = SimpleDateFormat("MM/dd", Locale.getDefault())
-        return dateFormat.format(calendar.time)
-    }
-
-    fun openStartTimePicker(view: View) {
-        startTimePicker.showTimePickerDialog()
-    }
-
-    fun openEndTimePicker(view: View) {
-        EndTimePicker.showTimePickerDialog()
-    }
-
-    fun openStartDatePicker(view: View) {
-        startDatePicker.showDatePicker()
-    }
-
-    fun openEndDatePicker(view: View) {
-        endDatePicker.showDatePicker()
-    }
 }

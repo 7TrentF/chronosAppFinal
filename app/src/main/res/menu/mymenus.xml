@@ -5,11 +5,12 @@
         android:id="@+id/report"
         android:title="Report"
         android:iconTint="@color/white"
+        android:icon="@drawable/ic_graph"
         />
 
     <item
         android:id="@+id/logout"
-        android:icon="@drawable/login_icon"
+        android:icon="@drawable/ic_logout"
         android:iconTint="@color/white"
         android:title="Logout" />
 
@@ -23,6 +24,6 @@
     <item
         android:id="@+id/SetDailyGoal"
         android:title="Daily Goal"
-        android:icon="@drawable/timesheet"/>
+        android:icon="@drawable/ic_goal"/>
 
 </menu>

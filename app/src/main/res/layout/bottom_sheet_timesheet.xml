@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:id="@+id/main"
     android:background="@color/maire"
     android:orientation="vertical"
     android:padding="16dp">
@@ -104,7 +105,7 @@
 
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/cvDuration"
+            android:id="@+id/cvTimer"
             android:layout_width="401dp"
             android:layout_height="470dp"
             android:layout_marginTop="20dp"
@@ -215,23 +216,24 @@
 
                 <EditText
                     android:id="@+id/tvDescription"
-                    android:layout_width="180dp"
-                    android:layout_height="93dp"
+                    android:layout_width="241dp"
+                    android:layout_height="89dp"
                     android:layout_marginBottom="4dp"
                     android:background="@drawable/edit_text_background"
                     android:backgroundTint="@color/maire"
                     android:onClick="openEndDatePicker"
-                    android:textColor="@color/white"
                     android:text="@string/description"
+                    android:textColor="@color/white"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.746"
                     app:layout_constraintStart_toEndOf="@+id/userImage" />
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/userImage"
                     android:layout_width="116dp"
                     android:layout_height="99dp"
+                    android:background="@color/black"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.037"
