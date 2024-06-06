@@ -176,6 +176,7 @@ class ListOfEntries : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
     }
 
     override fun onStart() {
@@ -267,7 +268,7 @@ class ListOfEntries : AppCompatActivity() {
         // Pass the mutable list to the ArrayAdapter
         val spinnerArrayAdapter = ArrayAdapter<String>(
             this@ListOfEntries,
-            android.R.layout.simple_spinner_item,
+            R.layout.spinner_dropdown_item,
             mutableFilterOptions
         )
         spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)

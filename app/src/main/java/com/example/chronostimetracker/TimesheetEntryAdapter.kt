@@ -173,18 +173,32 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
 
     private fun showBottomSheetDialog(context: Context, entry: TimesheetData) {
         val editHandler = TimesheetEdit(context, database)
-        editHandler.showEditDialog(entry) { editedEntry ->
-            editHandler.saveEntry(editedEntry)
-            // Update the list and notify the adapter
-            val position = entries.indexOfFirst { it.uniqueId == editedEntry.uniqueId }
-            if (position != -1) {
-                entries = entries.toMutableList().apply {
-                    set(position, editedEntry)
+        editHandler.showEditDialog(entry,
+            onSave = { editedEntry ->
+                editHandler.saveEntry(editedEntry)
+                // Update the list and notify the adapter
+                val position = entries.indexOfFirst { it.uniqueId == editedEntry.uniqueId }
+                if (position != -1) {
+                    entries = entries.toMutableList().apply {
+                        set(position, editedEntry)
+                    }
+                    notifyItemChanged(position)
                 }
-                notifyItemChanged(position)
+            },
+            onDelete = { entryId ->
+                editHandler.deleteEntry(entryId)
+                // Remove the entry from the list and notify the adapter
+                val position = entries.indexOfFirst { it.uniqueId == entryId }
+                if (position != -1) {
+                    entries = entries.toMutableList().apply {
+                        removeAt(position)
+                    }
+                    notifyItemRemoved(position)
+                }
             }
-        }
+        )
     }
+
 
     fun showTimerDialog(context: Context,  entry: TimesheetData, position: Int) {
         val currentUser = FirebaseAuth.getInstance().currentUser

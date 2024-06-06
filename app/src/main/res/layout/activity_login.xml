@@ -22,10 +22,11 @@
 
     <Button
         android:id="@+id/btnLogin"
-        android:layout_width="175dp"
-        android:layout_height="36dp"
+        android:layout_width="192dp"
+        android:layout_height="50dp"
         android:background="@drawable/yellow_border"
         android:text="@string/Login"
+        android:textColor="@color/yellow"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

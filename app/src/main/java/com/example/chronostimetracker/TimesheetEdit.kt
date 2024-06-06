@@ -15,7 +15,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import java.util.*
 
@@ -27,12 +26,9 @@ class TimesheetEdit(private val context: Context, private val database: Database
 
 
 
-    fun showEditDialog(entry: TimesheetData, onSave: (TimesheetData) -> Unit) {
+    fun showEditDialog(entry: TimesheetData, onSave: (TimesheetData) -> Unit, onDelete: (String) -> Unit) {
         val dialog = BottomSheetDialog(context)
         val view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_timesheet, null)
-
-
-
 
 
         val projectNameEditText: EditText = view.findViewById(R.id.tvProjectName)
@@ -42,19 +38,8 @@ class TimesheetEdit(private val context: Context, private val database: Database
         val startDateButton: Button = view.findViewById(R.id.tvStartDate)
         val endDateButton: Button = view.findViewById(R.id.tvEndDate)
         val descriptionEditText: EditText = view.findViewById(R.id.tvDescription)
-        val minTimeEditText: EditText = view.findViewById(R.id.tvMinTime)
-        val maxTimeEditText: EditText = view.findViewById(R.id.tvMaxTime)
         val userImageView: ImageView = view.findViewById(R.id.userImage)
 
-/*
-        // Initialize TimePickers for buttons
-        startTimePicker = TimePickerHandler(this, startTimeButton)
-        EndTimePicker = TimePickerHandler(this, endTimeButton)
-
-        // Initialize DatePickers for buttons
-        startDatePicker = DatePicker(this, startDateButton)
-        endDatePicker = DatePicker(this, endDateButton)
-*/
         // Set the existing values
         projectNameEditText.setText(entry.projectName)
         categoryEditText.setText(entry.category)
@@ -80,7 +65,7 @@ class TimesheetEdit(private val context: Context, private val database: Database
             entry.projectName = projectNameEditText.text.toString()
             entry.category = categoryEditText.text.toString()
             entry.description = descriptionEditText.text.toString()
-            entry.startTime =  startTimePicker.getTime()
+
 
 
             // Call the onSave callback to save the edited entry
@@ -88,8 +73,32 @@ class TimesheetEdit(private val context: Context, private val database: Database
             dialog.dismiss()
         }
 
+      val  deleteButton:Button = view.findViewById(R.id.deleteButton)
+
+        // Handle delete button click
+        deleteButton.setOnClickListener {
+            onDelete(entry.uniqueId.toString())
+            dialog.dismiss()
+        }
+
+
+
         dialog.setContentView(view)
         dialog.show()
+    }
+
+
+    fun deleteEntry(entryId: String) {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val timesheetEntryRef = database.child("user_entries").child(userId).child("Timesheet Entries").child(entryId)
+
+        timesheetEntryRef.removeValue().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Log.d("Firebase", "Timesheet entry deleted successfully.")
+            } else {
+                Log.w("Firebase", "Failed to delete timesheet entry.", task.exception)
+            }
+        }
     }
 
     fun saveEntry(entry: TimesheetData) {

@@ -31,6 +31,7 @@
         android:layout_height="116dp"
         android:layout_margin="5dp"
         android:paddingTop="?attr/actionBarSize"
+
         app:cardBackgroundColor="#1E1E1E"
         app:cardCornerRadius="10dp"
         app:cardElevation="5dp"
@@ -106,10 +107,35 @@
     </androidx.cardview.widget.CardView>
 
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/Image"
+        android:layout_width="116dp"
+        android:layout_height="95dp"
+        android:paddingTop="20dp"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="5dp"
+        android:backgroundTint="@color/black"
+        android:layout_marginTop="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cvProject">
+
+        <ImageButton
+            android:id="@+id/btnAddImage"
+            android:layout_width="98dp"
+            android:layout_height="83dp"
+            android:src="@drawable/img_placeholder"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent" />
+
+    </androidx.cardview.widget.CardView>
+
+
     <ScrollView
         android:id="@+id/scrollView2"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_width="411dp"
+        android:layout_height="393dp"
         android:overScrollMode="never"
         android:paddingTop="15dp"
         android:scrollbars="vertical"
@@ -117,87 +143,80 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.444"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/cvProject"
-        app:layout_constraintVertical_bias="0.638">
+        app:layout_constraintTop_toBottomOf="@+id/cvProject">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="10dp">
 
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guideline"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                app:layout_constraintGuide_begin="195dp" />
 
             <TextView
                 android:id="@+id/tvEnd"
-                android:layout_width="50dp"
-                android:layout_height="41dp"
-                android:layout_marginStart="4dp"
-                android:layout_marginTop="40dp"
+                android:layout_width="79dp"
+                android:layout_height="37dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="28dp"
                 android:text="@string/end"
                 android:textColor="@color/yellow"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="@+id/tvStart"
-                app:layout_constraintTop_toBottomOf="@+id/tvStart" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
 
             <Button
                 android:id="@+id/btnEndTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="28dp"
+                android:layout_marginEnd="48dp"
                 android:backgroundTint="@color/black"
                 android:onClick="openEndTimePicker"
                 android:text="@string/_00_01"
                 android:textColor="@color/white"
-                app:layout_constraintBottom_toBottomOf="@+id/btnEndDate"
-                app:layout_constraintEnd_toStartOf="@+id/btnEndDate"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/tvEnd" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvEnd" />
 
             <Button
                 android:id="@+id/btnEndDate"
                 style="?android:attr/spinnerStyle"
-                android:layout_width="100dp"
-                android:layout_height="45dp"
-                android:layout_marginTop="36dp"
+                android:layout_width="107dp"
+                android:layout_height="43dp"
+                android:layout_marginTop="32dp"
+                android:layout_marginEnd="4dp"
                 android:onClick="openEndDatePicker"
                 android:text="@string/_04_21"
                 android:textColor="@color/white"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toEndOf="@+id/btnEndTime"
-                app:layout_constraintTop_toBottomOf="@+id/btnStartDate" />
-
+                app:layout_constraintTop_toBottomOf="@+id/btnEndTime" />
 
             <Button
                 android:id="@+id/btnStartTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="28dp"
                 android:backgroundTint="@color/black"
                 android:onClick="openStartTimePicker"
                 android:text="@string/_00_00"
                 android:textColor="@color/white"
-                app:layout_constraintStart_toEndOf="@+id/tvStart"
-                app:layout_constraintStart_toStartOf="@+id/btnEndTime"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintEnd_toStartOf="@+id/btnEndTime"
+                app:layout_constraintHorizontal_bias="0.067"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvStart" />
 
             <TextView
                 android:id="@+id/tvStart"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="28dp"
-                android:layout_marginTop="16dp"
+                android:layout_width="65dp"
+                android:layout_height="42dp"
+                android:layout_marginTop="4dp"
                 android:text="@string/start"
                 android:textColor="@color/yellow"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@+id/btnStartTime"
-                app:layout_constraintHorizontal_bias="0.052"
+                app:layout_constraintEnd_toStartOf="@+id/tvEnd"
+                app:layout_constraintHorizontal_bias="0.173"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -206,104 +225,79 @@
                 style="?android:attr/spinnerStyle"
                 android:layout_width="100dp"
                 android:layout_height="49dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginStart="56dp"
+                android:layout_marginTop="28dp"
                 android:onClick="openStartDatePicker"
                 android:text="@string/_04_20"
                 android:textColor="@color/white"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.397"
-                app:layout_constraintStart_toEndOf="@+id/btnStartTime"
-                app:layout_constraintTop_toTopOf="parent" />
-
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/btnStartTime" />
 
             <View
                 android:id="@+id/viewTwo"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
+                android:layout_marginTop="52dp"
                 android:background="@android:color/black"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/guideline" />
+                app:layout_constraintTop_toBottomOf="@+id/btnStartDate" />
 
             <TextView
                 android:id="@+id/tvDescription"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="48dp"
-                android:layout_marginTop="188dp"
+                android:layout_marginStart="132dp"
+                android:layout_marginTop="44dp"
                 android:background="@drawable/white_button_border"
                 android:paddingTop="15dp"
                 android:text="@string/description"
                 android:textColor="@color/yellow"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="@+id/etDescription"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/viewTwo" />
+
 
             <EditText
                 android:id="@+id/etDescription"
-                android:layout_width="wrap_content"
-                android:layout_height="70dp"
-                android:layout_marginTop="48dp"
+                android:layout_width="238dp"
+                android:layout_height="81dp"
+                android:layout_marginTop="20dp"
                 android:autofillHints=""
                 android:background="@drawable/white_button_border"
                 android:hint="@string/enter_description_here"
                 android:inputType="text"
                 android:textColor="@color/white"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.455"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvDescription" />
-
-            <ImageView
-                android:id="@+id/imgUserImage"
-                android:layout_width="137dp"
-                android:layout_height="121dp"
-                android:layout_marginBottom="4dp"
-                android:elevation="3dp"
-                android:paddingBottom="10dp"
-                android:scaleType="centerCrop"
-                app:layout_constraintBottom_toTopOf="@+id/tvDescription"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:srcCompat="@drawable/ic_launcher_background" />
-
-            <Button
-                android:id="@+id/btnPickImg"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="36dp"
-                android:background="@drawable/yellow_border"
-                android:text="Add Image"
-                app:layout_constraintBottom_toTopOf="@+id/imgUserImage"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.492"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintTop_toBottomOf="@+id/tvDescription"
+                app:layout_constraintVertical_bias="0.0" />
 
             <Button
                 android:id="@+id/btnCreate"
                 android:layout_width="138dp"
                 android:layout_height="33dp"
-                android:layout_marginTop="32dp"
                 android:background="@drawable/yellow_border"
                 android:text="@string/create"
-                app:layout_constraintBottom_toBottomOf="parent"
+                android:textColor="@color/white"
+                android:layout_marginTop="25dp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.538"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/etDescription" />
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
     </ScrollView>
 
-
     <FrameLayout
         android:id="@+id/frame_layout"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="414dp"
+        android:layout_height="656dp"
         app:layout_constraintBottom_toTopOf="@+id/BottomNavigationView"
         app:layout_constraintEnd_toEndOf="parent"
 
@@ -316,6 +310,9 @@
         android:id="@+id/BottomNavigationView"
         android:layout_width="411dp"
         android:layout_height="70dp"
+        android:background="@color/maire"
+        app:itemIconTint="@color/white"
+        app:itemTextColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

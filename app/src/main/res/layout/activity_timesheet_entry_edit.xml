@@ -319,12 +319,12 @@
                 android:text="Save"
                 android:textColor="@color/black"
                 android:background="@color/lightGreen"
-                app:layout_constraintEnd_toStartOf="@+id/redButton"
+                app:layout_constraintEnd_toStartOf="@+id/btnDelete"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <Button
-                android:id="@+id/redButton"
+                android:id="@+id/btnDelete"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"

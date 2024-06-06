@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:background="@color/black"
     android:layout_height="match_parent">
     <!-- res/layout/bottom_toolbar.xml -->
 
@@ -24,9 +25,10 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="82dp"
-        android:background="@color/red"
+        android:background="@color/lightyellow"
         android:text="Stop"
-        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:textColor="@color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

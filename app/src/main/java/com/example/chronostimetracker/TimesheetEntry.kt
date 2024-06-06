@@ -16,6 +16,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import android.content.Intent
+import android.graphics.drawable.VectorDrawable
+import android.net.Uri
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
@@ -35,7 +37,8 @@ class TimesheetEntry : AppCompatActivity() {
     private lateinit var etProjectName: EditText
     private lateinit var etCategory: EditText
     private lateinit var etDescription: EditText
-    private lateinit var imgUserImage: ImageView
+   private lateinit var imgUserImage: ImageButton
+
     private lateinit var btnPickImg: Button
     private var uniqueId: Int = -1 // Initialize uniqueId with a default value
     private lateinit var camera: Camera
@@ -109,16 +112,14 @@ class TimesheetEntry : AppCompatActivity() {
         }
 
         camera = Camera(this)
-        imgUserImage = findViewById(R.id.imgUserImage)
-        btnPickImg = findViewById(R.id.btnPickImg)
+        imgUserImage = findViewById(R.id.btnAddImage)
 
-        btnPickImg.setOnClickListener {
-            //camera.openCamera(imgUserImage)
-            camera.showImagePickerOptions(imgUserImage)
-        }
-
+        // Set up the click listener for the ImageButton
         imgUserImage.setOnClickListener {
-            // Get the current image from the ImageView
+            // Trigger the camera to open and set the image
+            camera.showImagePickerOptions(imgUserImage)
+
+
             val drawable = imgUserImage.drawable
             if (drawable is BitmapDrawable) {
                 val bitmap = drawable.bitmap
@@ -134,6 +135,8 @@ class TimesheetEntry : AppCompatActivity() {
                 dialog.show()
             }
         }
+
+
 
 
         bottomNavigationView.setOnItemSelectedListener { item ->
@@ -156,6 +159,15 @@ class TimesheetEntry : AppCompatActivity() {
         }
     }
 
+    // Method to handle camera result
+
+    // Method to check if an image is set on the ImageButton
+    private fun isImageSet(imageButton: ImageButton): Boolean {
+        // Get the current drawable from the ImageButton
+        val drawable = imageButton.drawable
+        // Check if the drawable is not null and is not the placeholder
+        return drawable != null && drawable !is BitmapDrawable && drawable !is VectorDrawable
+    }
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         camera.handlePermissionResult(requestCode, grantResults)
@@ -282,4 +294,10 @@ class TimesheetEntry : AppCompatActivity() {
     fun openEndDatePicker(view: View) {
         endDatePicker.showDatePicker()
     }
+
+    fun onAddImageClick(view: View) {
+        camera.showImagePickerOptions(imgUserImage)
+    }
 }
+
+
