@@ -16,29 +16,21 @@
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/my_toolbar"
-            android:layout_width="413dp"
-            android:layout_height="68dp"
-            android:layout_marginTop="4dp"
+            android:layout_width="410dp"
+            android:layout_height="72dp"
             android:background="@drawable/white_button_border"
             android:elevation="4dp"
             android:paddingTop="20dp"
             android:paddingBottom="10dp"
-            android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+            android:gravity="center"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:titleTextColor="@color/black" />
 
-            <TextView
-                android:id="@+id/toolbar_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start"
 
-                android:textSize="20sp" />
-
-        </androidx.appcompat.widget.Toolbar>
 
         <androidx.cardview.widget.CardView
             android:id="@+id/category_project_container"
@@ -66,7 +58,6 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/filter"
                     android:text="Clear"
-
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.017"
                     app:layout_constraintStart_toStartOf="parent"
@@ -86,6 +77,20 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
 
+                <Button
+                    android:id="@+id/btnProject"
+                    android:layout_width="97dp"
+                    android:layout_height="23dp"
+                    android:layout_marginTop="28dp"
+                    android:background="@drawable/yellow_border"
+                    android:text="Project"
+                    android:textColor="@color/white"
+                    app:layout_constraintEnd_toStartOf="@+id/CategoryDisplayButton"
+                    app:layout_constraintHorizontal_bias="0.697"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
 
@@ -96,7 +101,7 @@
             android:id="@+id/viewContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -231,17 +236,54 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/projectContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/my_toolbar">
+
+            <!-- Your other views -->
+            <FrameLayout
+                android:id="@+id/line_chart_container"
+                android:layout_width="411dp"
+                android:layout_height="362dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/lineChart"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+            </FrameLayout>
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/BottomNavigationView"
             android:layout_width="411dp"
             android:layout_height="70dp"
+            android:background="@color/black"
+            app:itemIconTint="@color/white"
+            app:itemTextColor="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:itemTextColor="@color/white"
-            app:itemIconTint="@color/white"
-            android:background="@color/black"
             app:menu="@menu/bottom_navigation_menu" />
+
+        <FrameLayout
+            android:id="@+id/ProjectViewContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="661dp"
+            app:layout_constraintBottom_toTopOf="@+id/BottomNavigationView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -33,7 +33,6 @@ class TimesheetEdit(private val context: Context, private val database: Database
     private var currentImageButton: ImageButton? = null
     private lateinit var camera: Camera
 
-
     @SuppressLint("SuspiciousIndentation")
     fun showEditDialog(entry: TimesheetData, onSave: (TimesheetData) -> Unit, onDelete: (String) -> Unit) {
         val dialog = BottomSheetDialog(context)
@@ -147,8 +146,6 @@ class TimesheetEdit(private val context: Context, private val database: Database
         dialog.setContentView(view)
         dialog.show()
     }
-
-
 
     fun deleteEntry(entryId: String) {
 

@@ -12,7 +12,8 @@
     <color name="maire">#1F1F1E</color>
     <color name="veryLightYellow">#FFF18D</color>
     <color name="lightGreen">#1fea00</color>
-    <color name="menu_item_background">#FF000000</color> <!-- Change to your desired background color -->
-    <color name="menu_item_text">#FFFFFF</color> <!-- Change to your desired text color -->
-
+    <color name="menu_item_background">#FF000000</color>
+    <color name="menu_item_text">#FFFFFF</color>
+    <color name="Goldenrod">#D3A121</color>
+    Goldenrod
 </resources>

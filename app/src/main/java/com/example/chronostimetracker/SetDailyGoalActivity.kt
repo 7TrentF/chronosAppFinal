@@ -14,6 +14,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -43,6 +44,11 @@ class SetDailyGoalActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set_daily_goal)
 
+
+        val toolbar: Toolbar = findViewById(R.id.Daily_Goal_toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = "Daily Goal" // Set the title here
+
         minGoalButton = findViewById(R.id.btnMinGoal)
         maxGoalButton = findViewById(R.id.btnMaxGoal)
         saveGoalButton = findViewById(R.id.saveGoalButton)
@@ -60,9 +66,6 @@ class SetDailyGoalActivity : AppCompatActivity() {
                 maxGoalButton.text = "Max Goal: $maxGoal"
             }
         }
-
-
-
 
         saveGoalButton.setOnClickListener {
             saveDailyGoal()
@@ -213,7 +216,7 @@ class SetDailyGoalActivity : AppCompatActivity() {
             dailyGoalRef.child(currentDate).setValue(dailyGoal)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        Toast.makeText(this, "Goals updated successfully", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Saving Daily Goal: Date: $currentDate, Min Goal: $minGoal, Max Goal: $maxGoal", Toast.LENGTH_LONG).show()
                     } else {
                         Toast.makeText(this, "Failed to update goals", Toast.LENGTH_SHORT).show()
                     }
@@ -238,9 +241,11 @@ class SetDailyGoalActivity : AppCompatActivity() {
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val dailyGoal = DailyGoal(currentDate, minGoal, maxGoal)
 
+
             dailyGoalRef.child(currentDate).setValue(dailyGoal)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Daily goal saved", Toast.LENGTH_SHORT).show()
+                    Log.d("Firebase", "Saving Daily Goal: Date: $currentDate, Min Goal: $minGoal, Max Goal: $maxGoal")
                 }
                 .addOnFailureListener {
                     Toast.makeText(this, "Failed to save daily goal", Toast.LENGTH_SHORT).show()

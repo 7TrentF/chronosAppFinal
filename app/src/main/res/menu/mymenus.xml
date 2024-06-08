@@ -9,21 +9,43 @@
         />
 
     <item
-        android:id="@+id/logout"
-        android:icon="@drawable/ic_logout"
-        android:iconTint="@color/white"
-        android:title="Logout" />
-
-    <item
         android:id="@+id/Timesheet"
         android:title="Timesheet Entry"
         android:iconTint="@color/yellow"
         android:icon="@drawable/baseline_list_alt_24"/>
 
+    <item
+        android:id="@+id/categoryData"
+        android:icon="@drawable/ic_category"
+        android:iconTint="@color/white"
+        android:title="Categories" />
 
     <item
         android:id="@+id/SetDailyGoal"
         android:title="Daily Goal"
         android:icon="@drawable/ic_goal"/>
+
+    <item
+        android:iconTint="@color/white"
+        android:title=" " />
+    <item
+
+        android:iconTint="@color/white"
+        android:title=" " />
+    <item
+
+        android:iconTint="@color/white"
+        android:title=" " />
+    <item
+
+        android:iconTint="@color/white"
+        android:title=" " />
+
+
+    <item
+        android:id="@+id/logout"
+        android:icon="@drawable/ic_logout"
+        android:iconTint="@color/white"
+        android:title="Logout" />
 
 </menu>

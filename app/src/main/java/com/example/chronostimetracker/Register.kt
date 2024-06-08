@@ -21,6 +21,8 @@ class Register : AppCompatActivity() {
     private lateinit var pass: EditText
     private lateinit var btnReg: Button
     private lateinit var auth: FirebaseAuth
+    private lateinit var regInfo :Button
+    private lateinit var backLogin :Button
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -30,16 +32,28 @@ class Register : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
         user = findViewById(R.id.editUsername)
         pass = findViewById(R.id.editPassword)
         btnReg = findViewById(R.id.buttonRegister)
+        regInfo = findViewById(R.id.btnRegInfo)
+        backLogin = findViewById(R.id.btnBackToLogin)
         auth = Firebase.auth
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        btnReg.setOnClickListener() {
+
+        regInfo.setOnClickListener {
+                Toast.makeText(this, "Password must be at least characters long", Toast.LENGTH_SHORT).show()
+        }
+        backLogin.setOnClickListener {
+            val intent = Intent(this@Register, Login::class.java)
+            startActivity(intent)
+            finish()
+        }
+        btnReg.setOnClickListener{
             val username = user.text.toString()
             val password = pass.text.toString()
             registerUser(username, password)

@@ -1,5 +1,6 @@
 package com.example.chronostimetracker
 
+import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.util.Log
@@ -23,8 +24,11 @@ import androidx.appcompat.widget.Toolbar
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import java.util.*
 
 
@@ -38,13 +42,10 @@ class TimesheetEntry : AppCompatActivity() {
     private lateinit var etCategory: EditText
     private lateinit var etDescription: EditText
     private lateinit var imgUserImage: ImageButton
-
     private lateinit var btnPickImg: Button
     private var uniqueId: Int = -1 // Initialize uniqueId with a default value
     private lateinit var camera: Camera
-
-    // Firebase database reference
-    private lateinit var database: DatabaseReference
+    private lateinit var database: DatabaseReference  // Firebase database reference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,13 +57,12 @@ class TimesheetEntry : AppCompatActivity() {
             insets
         }
 
-        val toolbar: Toolbar = findViewById(R.id.my_toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.title = "Chronos Timesheets"
-
-
         // Initialize Firebase
         database = FirebaseDatabase.getInstance().reference
+
+        val toolbar: Toolbar = findViewById(R.id.my_toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = "Create Timesheet Entry"
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.BottomNavigationView)
         // Create button
@@ -161,8 +161,6 @@ class TimesheetEntry : AppCompatActivity() {
         }
     }
 
-
-
     private fun validateFields(): Boolean {
         val projectName = etProjectName.text.toString()
         val category = etCategory.text.toString()
@@ -211,10 +209,6 @@ class TimesheetEntry : AppCompatActivity() {
         val drawable = imageButton.drawable
         return drawable is BitmapDrawable
     }
-
-
-
-
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -346,6 +340,11 @@ class TimesheetEntry : AppCompatActivity() {
     fun onAddImageClick(view: View) {
         camera.showImagePickerOptions(imgUserImage)
     }
+
+
+
+
+
 }
 
 

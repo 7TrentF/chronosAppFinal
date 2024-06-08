@@ -28,11 +28,15 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
+
+
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.Timer
 import java.util.concurrent.TimeUnit
+
+
 
 class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : RecyclerView.Adapter<TimesheetEntryAdapter.ViewHolder>() {
     private lateinit var camera: Camera
@@ -48,7 +52,42 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
     init {
         // Initialize Firebase Database reference
         database = FirebaseDatabase.getInstance().reference
+
     }
+
+    private fun checkStartTimeMatchesCurrentTime(context: Context) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            val userEntriesRef = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid).child("Timesheet Entries")
+
+            userEntriesRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val currentTimeMillis = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val currentFormattedTime = sdf.format(Date(currentTimeMillis))
+
+                    for (entrySnapshot in dataSnapshot.children) {
+                        val entry = entrySnapshot.getValue(TimesheetData::class.java)
+                        entry?.let {
+                            // Compare start time to the current formatted time
+                            if (it.startTime == currentFormattedTime) {
+                                val projectName = it.projectName
+                                val description = it.description
+                                val message = "Start your timesheet entry for project '$projectName': $description"
+                                Log.d("TimesheetAlert", message)  // Log the message
+                                showAlert(context, message)
+                            }
+                        }
+                    }
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve timesheet entries", databaseError.toException())
+                }
+            })
+        }
+    }
+
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val uniqueIdTextView: TextView = itemView.findViewById(R.id.uniqueIdTextView)
         val projectNameTextView: TextView = itemView.findViewById(R.id.projectNameTextView)
@@ -78,6 +117,8 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         holder.uniqueIdTextView.text = entry.uniqueId // Assuming uniqueId is a Long or similar
         holder.projectNameTextView.text = entry.projectName
         holder.categoryTextView.text = entry.category
+
+        //checkStartTimeMatchesCurrentTime(holder.itemView.context)
 
         if (entry.imageData != null) {
             val decodedString = Base64.decode(entry.imageData, Base64.DEFAULT)
@@ -430,6 +471,17 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
 
 
 
+    private fun showAlert(context: Context, message: String) {
+        android.app.AlertDialog.Builder(context)
+            .setTitle("Start Timesheet Entry")
+            .setMessage(message)
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+
 
     private fun formatElapsedTime(elapsedTime: Long): String {
         val hours = TimeUnit.MILLISECONDS.toHours(elapsedTime)
@@ -439,4 +491,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
     }
 
     override fun getItemCount() = entries.size
+
+
 }

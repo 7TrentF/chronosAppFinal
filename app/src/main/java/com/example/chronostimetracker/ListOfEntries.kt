@@ -131,7 +131,6 @@ class ListOfEntries : AppCompatActivity() {
                     true
                 }
 
-
                 R.id.Timesheet -> {
                     // Open Login activity when the Login item is clicked
                     val intent = Intent(this, TimesheetEntry::class.java)
@@ -142,6 +141,13 @@ class ListOfEntries : AppCompatActivity() {
                 R.id.SetDailyGoal -> {
                     // Open Login activity when the Login item is clicked
                     val intent = Intent(this, SetDailyGoalActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+
+                R.id.categoryData -> {
+                    // Open Login activity when the Login item is clicked
+                    val intent = Intent(this, CategoryActivity::class.java)
                     startActivity(intent)
                     true
                 }
@@ -179,7 +185,56 @@ class ListOfEntries : AppCompatActivity() {
         toggle.syncState()
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+
+
+
+
     }
+
+
+    fun checkStartTimeMatchesCurrentTime(context: Context) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            val userEntriesRef = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid).child("Timesheet Entries")
+
+            userEntriesRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val currentTimeMillis = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val currentFormattedTime = sdf.format(Date(currentTimeMillis))
+
+                    for (entrySnapshot in dataSnapshot.children) {
+                        val entry = entrySnapshot.getValue(TimesheetData::class.java)
+                        entry?.let {
+                            // Compare start time to the current formatted time
+                            if (it.startTime == currentFormattedTime) {
+                                val projectName = it.projectName
+                                val description = it.description
+                                val message = "Start your timesheet entry for project '$projectName': $description"
+                                Log.d("TimesheetAlert", message)  // Log the message
+                                showAlert(context, message)
+                            }
+                        }
+                    }
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve timesheet entries", databaseError.toException())
+                }
+            })
+        }
+    }
+
+    private fun showAlert(context: Context, message: String) {
+        AlertDialog.Builder(context)
+            .setTitle("Start Timesheet Entry")
+            .setMessage(message)
+            .setPositiveButton("OK") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
 
     override fun onStart() {
         super.onStart()
@@ -470,45 +525,6 @@ class ListOfEntries : AppCompatActivity() {
         }
     }
 
-    /*
-    private fun filterEntriesByDate(startDate: String, endDate: String) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        currentUser?.let { user ->
-            val database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
-            val timesheetRef = database.child("Timesheet Entries") // Reference to the "Timesheet Entries" child
-
-            timesheetRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val filteredEntries = mutableListOf<TimesheetData>()
-                    val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                    val startDateObj = sdf.parse(startDate)
-                    val endDateObj = sdf.parse(endDate)
-
-                    for (entrySnapshot in dataSnapshot.children) {
-                        val entry = entrySnapshot.getValue(TimesheetData::class.java)
-
-                        // Ensure entry is not null and creation time is available
-                        if (entry != null && entry.creationTime != null) {
-                            val creationDate = Date(entry.creationTime)
-                            if (creationDate in startDateObj..endDateObj) {
-                                filteredEntries.add(entry)
-                            }
-                        }
-                    }
-
-                    // Now you have the filtered entries, you can update the UI or perform further operations
-                    // For example, you can display the filtered entries in a RecyclerView or ListView
-                    // Or you can call a function to update the UI with the filtered entries
-
-                    adapter.updateData(filteredEntries)
-                }
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve timesheet data", databaseError.toException())
-                }
-            })
-        }
-    }
-*/
 
 
 

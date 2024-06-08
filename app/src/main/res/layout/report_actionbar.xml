@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:text="Report"
-        android:textColor="@android:color/white"
+        android:textColor="@color/yellow"
         android:textSize="20sp" />
 
     <!-- Add any other views you want in your ActionBar here -->

@@ -19,9 +19,6 @@ class CategoryTimeAdapter(private val categoryTimeList: List<CategoryTime>) :
         holder.tvCategory.text = "    ${categoryTime.category}"
         holder.tvTotalTime.text = categoryTime.formattedTime
 
-
-
-
     }
 
     override fun getItemCount(): Int = categoryTimeList.size
