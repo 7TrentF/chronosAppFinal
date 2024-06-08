@@ -30,8 +30,6 @@
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
             app:titleTextColor="@color/black" />
 
-
-
         <androidx.cardview.widget.CardView
             android:id="@+id/category_project_container"
             android:layout_width="410dp"
@@ -242,31 +240,30 @@
             android:layout_height="match_parent"
             android:layout_below="@id/my_toolbar">
 
-            <ScrollView
-                xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true">
+            <!-- Your other views -->
+            <FrameLayout
+                android:id="@+id/line_chart_container"
+                android:layout_width="401dp"
+                android:layout_height="488dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/guideline">
 
-                <HorizontalScrollView
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/lineChart"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fillViewport="true">
+                    android:layout_height="473dp" />
 
-                    <FrameLayout
-                        android:id="@+id/line_chart_container"
-                        android:layout_width="800dp"
-                        android:layout_height="800dp"
-                        android:layout_gravity="center">
+            </FrameLayout>
 
-                        <com.github.mikephil.charting.charts.LineChart
-                            android:id="@+id/lineChart"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent" />
-
-                    </FrameLayout>
-                </HorizontalScrollView>
-            </ScrollView>
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_begin="91dp" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

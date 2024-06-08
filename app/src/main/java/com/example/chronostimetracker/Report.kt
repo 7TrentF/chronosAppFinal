@@ -138,14 +138,17 @@ class Report : AppCompatActivity() {
 
                     for (dateSnapshot in dataSnapshot.children) {
                         val date = dateSnapshot.key ?: continue
-                        val totalTime =
-                            dateSnapshot.child("Time").getValue(Long::class.java) ?: continue
-                        val totalHours = totalTime / (1000 * 60 * 60).toFloat()
+                        val totalTime = dateSnapshot.child("Time").getValue(Long::class.java) ?: continue
+
+                        val totalHours = (totalTime / (1000 * 60 * 60)).toFloat()
+                        val totalMinutes = ((totalTime % (1000 * 60 * 60)) / (1000 * 60)).toFloat()
+                        val totalSeconds = ((totalTime % (1000 * 60)) / 1000).toFloat()
+                        val totalTimeInHours = totalHours + totalMinutes / 60 + totalSeconds / 3600
 
                         val dateParsed = dateFormat.parse(date)
                         val dateMillis = dateParsed?.time?.toFloat() ?: continue
 
-                        entries.add(Entry(dateMillis, totalHours))
+                        entries.add(Entry(dateMillis, totalTimeInHours))
                     }
 
                     // Sort entries by X value (date)
@@ -156,14 +159,9 @@ class Report : AppCompatActivity() {
                 }
 
                 override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e(
-                        "Firebase",
-                        "Failed to retrieve totalTimeTracked",
-                        databaseError.toException()
-                    )
+                    Log.e("Firebase", "Failed to retrieve totalTimeTracked", databaseError.toException())
                 }
             })
-
         }
 
 
@@ -178,21 +176,32 @@ class Report : AppCompatActivity() {
         val lineDataSet = LineDataSet(entries, "Total Time Tracked")
 
         // Customize the line appearance
-        lineDataSet.color = Color.BLUE // Set the line color
-        lineDataSet.valueTextColor = Color.BLACK // Set the text color for values
+        lineDataSet.color = Color.WHITE // Set the line color
+        lineDataSet.valueTextColor = Color.YELLOW // Set the text color for values
         lineDataSet.lineWidth = 2f // Set the width of the line
         lineDataSet.circleRadius = 4f // Set the size of the points (circles)
         lineDataSet.circleHoleRadius = 2f // Set the size of the hole in the points
-        lineDataSet.setCircleColor(Color.RED) // Set the color of the points (circles)
+        lineDataSet.setCircleColor(Color.YELLOW) // Set the color of the points (circles)
         lineDataSet.valueTextSize = 12f // Set the text size for values
-        lineDataSet.enableDashedLine(10f, 5f, 0f) // Dashed line
+       // lineDataSet.enableDashedLine(10f, 5f, 0f) // Dashed line
         lineDataSet.setDrawFilled(true) // Enable fill
-        lineDataSet.fillColor = Color.BLUE // Set fill color
+       // lineDataSet.fillColor = Color.BLUE // Set fill color
         lineDataSet.fillAlpha = 50 // Set fill transparency
 
         // Highlighting
         lineDataSet.setDrawHighlightIndicators(true)
         lineDataSet.highLightColor = Color.YELLOW // Color for highlighting
+
+        // Create custom value formatter for hours, minutes, and seconds
+        lineDataSet.valueFormatter = object : ValueFormatter() {
+            override fun getPointLabel(entry: Entry): String {
+                val totalHours = entry.y.toInt()
+                val totalMinutes = ((entry.y - totalHours) * 60).toInt()
+                val totalSeconds = ((((entry.y - totalHours) * 60) - totalMinutes) * 60).toInt()
+
+                return String.format("%02d:%02d:%02d", totalHours, totalMinutes, totalSeconds)
+            }
+        }
 
         // Create LineData with the customized dataset
         val lineData = LineData(lineDataSet)
@@ -209,53 +218,45 @@ class Report : AppCompatActivity() {
         }
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.textSize = 12f // Set X-axis text size
+        xAxis.textColor = Color.WHITE // Set X-axis text color
         xAxis.labelRotationAngle = -45f // Rotate labels if necessary
         xAxis.granularity = 1f // Set the minimum interval between labels
 
         // Customizing the Y-axis
         val yAxisLeft = lineChart.axisLeft
         yAxisLeft.textSize = 12f // Set Y-axis text size
+        yAxisLeft.textColor = Color.WHITE // Set Y-axis text color
         yAxisLeft.axisMinimum = 0f // Set the minimum value for the Y-axis
 
+
         val yAxisRight = lineChart.axisRight
-        yAxisRight.isEnabled = false // Disable the right Y-axis
+        yAxisRight.isEnabled = true // Disable the right Y-axis
 
         // Adding labels to the axes
         xAxis.setLabelCount(entries.size, true) // Ensure that all X-axis labels are shown
         yAxisLeft.setLabelCount(6, true) // Adjust number of Y-axis labels
 
         // Customizing the LineChart
-        lineChart.setBackgroundColor(Color.LTGRAY) // Set background color
+        lineChart.setBackgroundColor(Color.BLACK) // Set background color
         lineChart.xAxis.setDrawGridLines(false) // Disable X-axis grid lines
         lineChart.axisLeft.setDrawGridLines(false) // Disable left Y-axis grid lines
-
-
-        // Assuming 'lineChart' is your LineChart instance
-        lineChart.getXAxis().setTextColor(Color.BLUE); // For X-axis labels
-        lineChart.getAxisLeft().setTextColor(Color.BLUE); // For left Y-axis labels
-        lineChart.getAxisRight().setTextColor(Color.BLUE); // For right Y-axis labels
-
 
         // Legend customization
         val legend = lineChart.legend
         legend.form = Legend.LegendForm.LINE
-        legend.textColor = Color.BLUE // Legend text color
+        legend.textColor = Color.WHITE // Legend text color
         legend.textSize = 14f // Legend text size
 
         // Description customization
         val description = Description()
         description.text = "Time Tracked Over Days"
-        description.textColor = Color.BLACK // Description text color
+        description.textColor = Color.WHITE // Description text color
         description.textSize = 14f // Description text size
         lineChart.description = description
 
         // Refresh the chart
         lineChart.invalidate()
     }
-
-
-
-
 
 
 
