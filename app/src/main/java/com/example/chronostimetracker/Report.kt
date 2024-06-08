@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.mikephil.charting.animation.Easing
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.charts.PieChart
+import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.LimitLine
@@ -131,6 +132,9 @@ class Report : AppCompatActivity() {
             val database = FirebaseDatabase.getInstance().reference
             val userEntriesRef = database.child("user_entries").child(user.uid)
             val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
+
+
+
             totalTimeTrackedRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     val entries = mutableListOf<Entry>()
@@ -151,11 +155,38 @@ class Report : AppCompatActivity() {
                         entries.add(Entry(dateMillis, totalTimeInHours))
                     }
 
-                    // Sort entries by X value (date)
-                    entries.sortBy { it.x }
+                    val dailyGoalRef = userEntriesRef.child("DailyGoal")
+                    val minGoalEntries = mutableListOf<Entry>()
+                    val maxGoalEntries = mutableListOf<Entry>()
 
-                    // Update LineChart with the retrieved data
-                    updateLineChart(entries)
+                    // Retrieve daily goals
+                    dailyGoalRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(dailyGoalSnapshot: DataSnapshot) {
+                            for (goalSnapshot in dailyGoalSnapshot.children) {
+                                val date = goalSnapshot.key ?: continue
+                                val minGoal = goalSnapshot.child("minGoal").getValue(Int::class.java)?.toFloat() ?: continue
+                                val maxGoal = goalSnapshot.child("maxGoal").getValue(Int::class.java)?.toFloat() ?: continue
+
+                                val dateParsed = dateFormat.parse(date)
+                                val dateMillis = dateParsed?.time?.toFloat() ?: continue
+
+                                minGoalEntries.add(Entry(dateMillis, minGoal))
+                                maxGoalEntries.add(Entry(dateMillis, maxGoal))
+                            }
+
+                            // Sort entries by X value (date)
+                            entries.sortBy { it.x }
+                            minGoalEntries.sortBy { it.x }
+                            maxGoalEntries.sortBy { it.x }
+
+                            // Update LineChart with the retrieved data
+                            updateLineChart(entries, minGoalEntries, maxGoalEntries)
+                        }
+
+                        override fun onCancelled(databaseError: DatabaseError) {
+                            Log.e("Firebase", "Failed to retrieve daily goals", databaseError.toException())
+                        }
+                    })
                 }
 
                 override fun onCancelled(databaseError: DatabaseError) {
@@ -170,27 +201,24 @@ class Report : AppCompatActivity() {
     }
 
 
-    fun updateLineChart(entries: List<Entry>) {
+    fun updateLineChart(entries: List<Entry>, minGoalEntries: List<Entry>, maxGoalEntries: List<Entry>) {
         val lineChart = findViewById<LineChart>(R.id.lineChart)
 
         val lineDataSet = LineDataSet(entries, "Total Time Tracked")
+        val minGoalDataSet = LineDataSet(minGoalEntries, "Min Daily Goal")
+        val maxGoalDataSet = LineDataSet(maxGoalEntries, "Max Daily Goal")
 
-        // Customize the line appearance
-        lineDataSet.color = Color.WHITE // Set the line color
-        lineDataSet.valueTextColor = Color.YELLOW // Set the text color for values
-        lineDataSet.lineWidth = 2f // Set the width of the line
-        lineDataSet.circleRadius = 4f // Set the size of the points (circles)
-        lineDataSet.circleHoleRadius = 2f // Set the size of the hole in the points
-        lineDataSet.setCircleColor(Color.YELLOW) // Set the color of the points (circles)
-        lineDataSet.valueTextSize = 12f // Set the text size for values
-       // lineDataSet.enableDashedLine(10f, 5f, 0f) // Dashed line
-        lineDataSet.setDrawFilled(true) // Enable fill
-       // lineDataSet.fillColor = Color.BLUE // Set fill color
-        lineDataSet.fillAlpha = 50 // Set fill transparency
-
-        // Highlighting
+        // Customize the line appearance for total time tracked
+        lineDataSet.color = Color.WHITE
+        lineDataSet.valueTextColor = Color.YELLOW
+        lineDataSet.lineWidth = 2f
+        lineDataSet.circleRadius = 4f
+        lineDataSet.setCircleColor(Color.YELLOW)
+        lineDataSet.valueTextSize = 12f
+        lineDataSet.setDrawFilled(true)
+        lineDataSet.fillAlpha = 50
         lineDataSet.setDrawHighlightIndicators(true)
-        lineDataSet.highLightColor = Color.YELLOW // Color for highlighting
+        lineDataSet.highLightColor = Color.YELLOW
 
         // Create custom value formatter for hours, minutes, and seconds
         lineDataSet.valueFormatter = object : ValueFormatter() {
@@ -203,8 +231,22 @@ class Report : AppCompatActivity() {
             }
         }
 
-        // Create LineData with the customized dataset
-        val lineData = LineData(lineDataSet)
+        // Customize the line appearance for min goal
+        minGoalDataSet.color = Color.GREEN
+        minGoalDataSet.valueTextColor = Color.GREEN
+        minGoalDataSet.lineWidth = 2f
+        minGoalDataSet.circleRadius = 0f
+        minGoalDataSet.setDrawCircles(false)
+
+        // Customize the line appearance for max goal
+        maxGoalDataSet.color = Color.RED
+        maxGoalDataSet.valueTextColor = Color.RED
+        maxGoalDataSet.lineWidth = 2f
+        maxGoalDataSet.circleRadius = 0f
+        maxGoalDataSet.setDrawCircles(false)
+
+        // Create LineData with the customized datasets
+        val lineData = LineData(lineDataSet, minGoalDataSet, maxGoalDataSet)
         lineChart.data = lineData
 
         // Customizing the X-axis to display dates
@@ -217,46 +259,55 @@ class Report : AppCompatActivity() {
             }
         }
         xAxis.position = XAxis.XAxisPosition.BOTTOM
-        xAxis.textSize = 12f // Set X-axis text size
-        xAxis.textColor = Color.WHITE // Set X-axis text color
-        xAxis.labelRotationAngle = -45f // Rotate labels if necessary
-        xAxis.granularity = 1f // Set the minimum interval between labels
+        xAxis.textSize = 12f
+        xAxis.textColor = Color.WHITE
+        xAxis.labelRotationAngle = -45f
+        xAxis.granularity = 1f
 
         // Customizing the Y-axis
         val yAxisLeft = lineChart.axisLeft
-        yAxisLeft.textSize = 12f // Set Y-axis text size
-        yAxisLeft.textColor = Color.WHITE // Set Y-axis text color
-        yAxisLeft.axisMinimum = 0f // Set the minimum value for the Y-axis
+        yAxisLeft.textSize = 12f
+        yAxisLeft.textColor = Color.WHITE
+        yAxisLeft.axisMinimum = 0f
+        val maxEntryValue = (entries + minGoalEntries + maxGoalEntries).maxOfOrNull { it.y } ?: 0f
+        yAxisLeft.axisMaximum = if (maxEntryValue < 1f) 1f else maxEntryValue
 
+        // Set Y-axis label
+        yAxisLeft.valueFormatter = object : ValueFormatter() {
+            override fun getAxisLabel(value: Float, axis: AxisBase?): String {
+                return "$value Hours"
+            }
+        }
 
         val yAxisRight = lineChart.axisRight
-        yAxisRight.isEnabled = true // Disable the right Y-axis
+        yAxisRight.isEnabled = false
 
         // Adding labels to the axes
-        xAxis.setLabelCount(entries.size, true) // Ensure that all X-axis labels are shown
-        yAxisLeft.setLabelCount(6, true) // Adjust number of Y-axis labels
+        xAxis.setLabelCount(entries.size, true)
+        yAxisLeft.setLabelCount(6, true)
 
         // Customizing the LineChart
-        lineChart.setBackgroundColor(Color.BLACK) // Set background color
-        lineChart.xAxis.setDrawGridLines(false) // Disable X-axis grid lines
-        lineChart.axisLeft.setDrawGridLines(false) // Disable left Y-axis grid lines
+        lineChart.setBackgroundColor(Color.BLACK)
+        lineChart.xAxis.setDrawGridLines(false)
+        lineChart.axisLeft.setDrawGridLines(false)
 
         // Legend customization
         val legend = lineChart.legend
         legend.form = Legend.LegendForm.LINE
-        legend.textColor = Color.WHITE // Legend text color
-        legend.textSize = 14f // Legend text size
+        legend.textColor = Color.WHITE
+        legend.textSize = 14f
 
         // Description customization
         val description = Description()
         description.text = "Time Tracked Over Days"
-        description.textColor = Color.WHITE // Description text color
-        description.textSize = 14f // Description text size
+        description.textColor = Color.WHITE
+        description.textSize = 14f
         lineChart.description = description
 
         // Refresh the chart
         lineChart.invalidate()
     }
+
 
 
 
