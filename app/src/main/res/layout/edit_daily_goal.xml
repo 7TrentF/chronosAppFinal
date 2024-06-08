@@ -52,7 +52,7 @@
                 android:textColor="@color/white"
                 android:textSize="18sp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.023"
+                app:layout_constraintHorizontal_bias="0.436"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -60,13 +60,13 @@
                 android:id="@+id/tvCurrentMin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="36dp"
                 android:hint="@string/minimum_hours"
                 android:paddingBottom="16dp"
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintHorizontal_bias="0.023"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textViewCurrentGoal" />
 
@@ -75,14 +75,14 @@
                 android:id="@+id/tvCurrentMax"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
+                android:layout_marginBottom="44dp"
                 android:hint="@string/Maximum_Hours"
                 android:paddingBottom="16dp"
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.403"
+                app:layout_constraintHorizontal_bias="0.846"
                 app:layout_constraintStart_toStartOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -93,7 +93,7 @@
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="240dp"
+        android:layout_marginTop="256dp"
         android:text="Edit the goals below:"
         android:textColor="@color/white"
         android:textSize="18dp"
@@ -102,30 +102,35 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
-    <Button
-        android:id="@+id/btnMinGoal"
-        android:layout_width="153dp"
+    <EditText
+        android:id="@+id/etMinGoal"
+        android:layout_width="160dp"
         android:layout_height="48dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        android:background="@drawable/yellow_border"
-        android:text="Set Minimum Goal"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/white_button_border"
+        android:hint="Set Minimum Goal"
+        android:inputType="number"
+        android:textSize="16sp"
         android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/btnMaxGoal"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/btnMaxGoal" />
-
-    <Button
-        android:id="@+id/btnMaxGoal"
-        android:layout_width="157dp"
-        android:layout_height="53dp"
-        android:layout_marginTop="392dp"
-        android:background="@drawable/yellow_border"
-        android:text="Set Maximum Goal"
-        android:textColor="@color/white"
+        android:textColorHint="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.94"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+
+    <EditText
+        android:id="@+id/etMaxGoal"
+        android:layout_width="159dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="452dp"
+        android:background="@drawable/white_button_border"
+        android:hint="Set Maximum Goal"
+        android:textSize="16sp"
+        android:inputType="number"
+        android:textColor="@color/white"
+        android:textColorHint="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.495"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
