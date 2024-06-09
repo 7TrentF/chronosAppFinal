@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:id="@+id/main"
     android:background="@color/maire"
     android:orientation="vertical"
@@ -11,11 +11,11 @@
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cvProject"
-        android:layout_width="374dp"
-        android:layout_height="121dp"
+        android:layout_width="385dp"
+        android:layout_height="133dp"
         android:layout_margin="5dp"
         android:backgroundTint="@color/black"
-        app:cardCornerRadius="10dp"
+        app:cardCornerRadius="20dp"
         app:cardElevation="5dp"
 
         app:layout_constraintEnd_toEndOf="parent"
@@ -26,7 +26,6 @@
             android:layout_width="374dp"
             android:layout_height="match_parent"
             android:padding="10dp"
-
             app:layout_constraintEnd_toEndOf="@+id/tvProjectName"
             app:layout_constraintStart_toEndOf="@+id/tvProjectName">
 
@@ -36,13 +35,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="28dp"
+                android:layout_marginEnd="16dp"
                 android:text="@string/Project_name"
                 android:textColor="#FDB813"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/tvCategory"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
@@ -50,36 +49,40 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Project:"
-                android:textColor="#FDB813"
+                android:textColor="@color/white"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="@+id/etCategory"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintBottom_toBottomOf="@+id/tvProjectName"
+                app:layout_constraintEnd_toStartOf="@+id/tvProjectName"
+                app:layout_constraintHorizontal_bias="0.283"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/tvProjectName" />
 
             <EditText
                 android:id="@+id/tvCategory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="28dp"
+                android:layout_marginEnd="52dp"
                 android:text="@string/category"
                 android:textColor="#FDB813"
                 android:textSize="18sp"
                 android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@+id/etCategory"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvProjectName" />
+                app:layout_constraintTop_toTopOf="@+id/etCategory" />
 
             <TextView
                 android:id="@+id/etCategory"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="44dp"
+                android:layout_marginStart="40dp"
+                android:layout_marginTop="32dp"
                 android:text="@string/category"
-                android:textColor="#FDB813"
+                android:textColor="@color/white"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toStartOf="@+id/tvCategory"
-                app:layout_constraintHorizontal_bias="0.165"
+                app:layout_constraintHorizontal_bias="0.03"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/etProjectName" />
 
@@ -89,40 +92,29 @@
     </androidx.cardview.widget.CardView>
 
 
-    <ScrollView
-        android:id="@+id/scrollView2"
-        android:layout_width="406dp"
-        android:layout_height="580dp"
-        android:overScrollMode="never"
-        android:paddingTop="15dp"
-        android:scrollbars="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvTimer"
+        android:layout_width="393dp"
+        android:layout_height="465dp"
+        android:backgroundTint="@color/black"
+        android:paddingTop="?attr/actionBarSize"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="5dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.529"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cvProject"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintTop_toBottomOf="@+id/cvProject">
 
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cvTimer"
-            android:layout_width="401dp"
-            android:layout_height="470dp"
-            android:layout_marginTop="20dp"
-            android:paddingTop="?attr/actionBarSize"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="5dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+        <ScrollView
+            android:id="@+id/scrollView2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="450dp"
-                android:background="@color/black"
-                android:padding="10dp"
-                app:layout_constraintEnd_toEndOf="@+id/tvProjectName"
-                app:layout_constraintStart_toEndOf="@+id/tvProjectName">
+                android:layout_height="wrap_content">
 
 
                 <TextView
@@ -131,7 +123,7 @@
                     android:layout_height="34dp"
                     android:layout_marginTop="4dp"
                     android:text="@string/start"
-                    android:textColor="@color/yellow"
+                    android:textColor="@color/white"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -146,7 +138,7 @@
                     android:layout_marginTop="116dp"
                     android:backgroundTint="@color/maire"
                     android:text="@string/end"
-                    android:textColor="@color/yellow"
+                    android:textColor="@color/white"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -154,14 +146,14 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tvStart" />
 
+
                 <Button
                     android:id="@+id/tvStartTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
+                    android:layout_width="185dp"
+                    android:layout_height="46dp"
+                    android:layout_marginStart="8dp"
                     android:layout_marginTop="16dp"
                     android:background="@drawable/edit_text_background"
-                    android:backgroundTint="@color/maire"
                     android:onClick="openStartTimePicker"
                     android:text="@string/start_time"
                     android:textColor="@color/yellow"
@@ -169,56 +161,52 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tvStart" />
 
-
                 <Button
                     android:id="@+id/tvEndTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_width="185dp"
+                    android:layout_height="46dp"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="28dp"
                     android:background="@drawable/edit_text_background"
-                    android:backgroundTint="@color/maire"
                     android:onClick="openEndTimePicker"
                     android:text="@string/end_time"
                     android:textColor="@color/yellow"
                     android:textSize="14sp"
-                    app:layout_constraintEnd_toStartOf="@+id/tvEndDate"
-                    app:layout_constraintHorizontal_bias="0.059"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tvEnd" />
 
                 <Button
                     android:id="@+id/tvStartDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="120dp"
+                    android:layout_width="185dp"
+                    android:layout_height="46dp"
                     android:background="@drawable/edit_text_background"
-                    android:backgroundTint="@color/maire"
                     android:onClick="openStartDatePicker"
                     android:text="@string/start_date"
                     android:textColor="@color/yellow"
                     android:textSize="14sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toEndOf="@+id/tvStartTime"
                     app:layout_constraintTop_toTopOf="@+id/tvStartTime" />
 
                 <Button
                     android:id="@+id/tvEndDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="108dp"
-                    android:layout_marginEnd="36dp"
+                    android:layout_width="185dp"
+                    android:layout_height="46dp"
                     android:background="@drawable/edit_text_background"
-                    android:backgroundTint="@color/maire"
                     android:text="@string/end_date"
                     android:textColor="@color/yellow"
                     android:textSize="14sp"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tvStartDate" />
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintStart_toEndOf="@+id/tvEndTime"
+                    app:layout_constraintTop_toTopOf="@+id/tvEndTime" />
 
                 <EditText
                     android:id="@+id/tvDescription"
-                    android:layout_width="241dp"
-                    android:layout_height="89dp"
-                    android:layout_marginBottom="4dp"
+                    android:layout_width="207dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="88dp"
                     android:background="@drawable/edit_text_background"
                     android:backgroundTint="@color/maire"
                     android:onClick="openEndDatePicker"
@@ -226,78 +214,96 @@
                     android:textColor="@color/white"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.746"
+                    app:layout_constraintHorizontal_bias="0.821"
                     app:layout_constraintStart_toEndOf="@+id/userImage" />
 
                 <ImageButton
                     android:id="@+id/userImage"
-                    android:layout_width="116dp"
-                    android:layout_height="99dp"
+                    android:layout_width="82dp"
+                    android:layout_height="86dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="40dp"
                     android:background="@color/black"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.037"
+                    app:layout_constraintHorizontal_bias="0.075"
                     app:layout_constraintStart_toStartOf="parent" />
 
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+        </ScrollView>
 
-
-        </androidx.cardview.widget.CardView>
-
-    </ScrollView>
+    </androidx.cardview.widget.CardView>
 
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cvTemp"
-        android:layout_width="315dp"
-        android:layout_height="72dp"
+        android:layout_width="319dp"
+        android:layout_height="88dp"
+        android:layout_marginTop="7dp"
         android:backgroundTint="@color/black"
         android:paddingTop="?attr/actionBarSize"
         app:cardCornerRadius="10dp"
+
         app:cardElevation="5dp"
-
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cvTimer">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/black"
-            android:orientation="horizontal"
             android:padding="10dp">
 
             <Button
                 android:id="@+id/saveButton"
-                android:layout_width="125dp"
-                android:layout_height="43dp"
-                android:layout_gravity="center"
-                android:layout_weight="1"
-                android:background="@drawable/save_button"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="36dp"
+                android:background="@drawable/ic_save"
                 android:padding="6dp"
-                android:text="Save"
-
                 android:textColor="@android:color/white"
                 android:textStyle="bold"
-                tools:layout_editor_absoluteX="184dp"
-                tools:layout_editor_absoluteY="0dp" />
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/deleteButton"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save Edits"
+                android:textColor="@color/white"
+                app:layout_constraintTop_toBottomOf="@+id/saveButton"
+                tools:layout_editor_absoluteX="22dp" />
 
             <Button
                 android:id="@+id/deleteButton"
-                android:layout_width="125dp"
-                android:layout_height="43dp"
-                android:layout_gravity="center"
-                android:layout_weight="1"
-                android:background="@drawable/delete_button"
+                android:layout_width="44dp"
+                android:layout_height="37dp"
+                android:layout_marginEnd="36dp"
+                android:background="@drawable/ic_delete"
                 android:padding="6dp"
-                android:text="Delete"
-
                 android:textColor="@android:color/white"
                 android:textStyle="bold"
-                tools:layout_editor_absoluteX="184dp"
-                tools:layout_editor_absoluteY="0dp" />
-        </LinearLayout>
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="40dp"
+                android:text="Delete"
+                android:textColor="@color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/deleteButton" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

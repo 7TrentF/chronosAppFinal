@@ -291,6 +291,8 @@ class ListOfEntries : AppCompatActivity() {
                             entries.add(entry)
                         }
                     }
+                    // Sort entries by creation time in descending order
+                    entries.sortByDescending { it.creationTime }
                     adapter.notifyDataSetChanged() // Notify the adapter about data changes
                 }
 
@@ -300,6 +302,7 @@ class ListOfEntries : AppCompatActivity() {
             })
         }
     }
+
 
 
 
@@ -525,8 +528,10 @@ class ListOfEntries : AppCompatActivity() {
         }
     }
 
-
-
+    private fun groupEntriesByDate(entries: List<TimesheetData>): Map<String, List<TimesheetData>> {
+        val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
+        return entries.groupBy { sdf.format(Date(it.creationTime)) }
+    }
 
     override fun onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {

@@ -49,13 +49,6 @@
             android:layout_height="154dp"
             android:padding="8dp">
 
-            <!-- TextView for Project Name -->
-
-            <!-- TextView for Category -->
-
-
-            <!-- TextView for Unique ID -->
-
             <ImageView
                 android:id="@+id/userImage"
                 android:layout_width="82dp"

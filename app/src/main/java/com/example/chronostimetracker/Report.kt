@@ -56,6 +56,7 @@ class Report : AppCompatActivity() {
     private lateinit var clearButton: ImageButton
     private lateinit var viewContainer: ConstraintLayout
     private lateinit var projectView: ConstraintLayout
+    var selectedButton: Button? = null
 
     private lateinit var CategoryDisplayButton: Button
 
@@ -93,12 +94,30 @@ class Report : AppCompatActivity() {
         CategoryDisplayButton.setOnClickListener {
             projectView.visibility = View.GONE
             viewContainer.visibility = View.VISIBLE
+
+            btnProject.setTextColor(resources.getColor(R.color.white))
+            btnProject.setBackgroundResource(R.drawable.black_border)
+
+            CategoryDisplayButton.isPressed = true
+            CategoryDisplayButton.setTextColor(resources.getColor(R.color.black))
+            CategoryDisplayButton.setBackgroundResource(R.drawable.button_selector)
+
+            // Set the clicked button as the selected button
+            selectedButton = btnProject
         }
 
         btnProject.setOnClickListener {
             viewContainer.visibility = View.GONE
-
             projectView.visibility = View.VISIBLE
+
+            CategoryDisplayButton.setTextColor(resources.getColor(R.color.white))
+            CategoryDisplayButton.setBackgroundResource(R.drawable.black_border)
+            // Update UI for the clicked button
+            btnProject.isPressed = true
+            btnProject.setTextColor(resources.getColor(R.color.black))
+            btnProject.setBackgroundResource(R.drawable.button_selector)
+            // Set the clicked button as the selected button
+            selectedButton = btnProject
         }
 
         bottomNavigationView.setOnItemSelectedListener { item ->
