@@ -32,19 +32,33 @@
     <string name="Login">Login</string>
     <string name="Password">Password</string>
 
-
-    <string name="Photo">Category:</string>
     <string name="max_time">Max Time</string>
     <string name="min_time">Min Time</string>
     <string name="start_date">Start Date</string>
     <string name="end_date">End Date</string>
     <string name="end_time">End Time</string>
     <string name="start_time">Start Time</string>
+
+
+    <string name="enter_time">Enter Time Duration</string>
+    <string name="minute_added">1 Minute Added</string>
+    <string name="times_up">Time\'s Up!</string>
+    <string name="round_text">Round %1$d</string>
+    <string name="break_time">Break Time!</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="start_break">Start Break</string>
+    <string name="end_break">End Break</string>
+    <string name="break_ended">Break Ended</string>
+    <string name="enter_time_and_rounds">Please enter both time and number of rounds</string>
+    <string name="time_left">Time Left: %d min %d sec</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+
+
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
@@ -84,6 +98,12 @@
     </string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+
+    <string name="Photo">Category:</string>
+
     <string name="set_maximum_goal">Set Maximum Goal</string>
+
 
 </resources>

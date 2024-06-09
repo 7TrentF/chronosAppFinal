@@ -164,7 +164,6 @@ class SetDailyGoalActivity : AppCompatActivity() {
         }
     }
 
-
     private fun saveDailyGoal(minGoal: Int, maxGoal: Int) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->

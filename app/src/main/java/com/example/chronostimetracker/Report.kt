@@ -1,5 +1,6 @@
 package com.example.chronostimetracker
 
+import android.app.Dialog
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -133,6 +134,15 @@ class Report : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+                R.id.pomodoro -> {
+                    // Open Pomodoro dialog when the Pomodoro item is clicked
+                    val pomodoroDialog = Dialog(this)
+                    pomodoroDialog.setContentView(R.layout.dialog_pomodoro_timer)
+                    val pomodoroTimer = PomodoroTimer(this)
+                    pomodoroTimer.setupDialog(pomodoroDialog)
+                    pomodoroDialog.show()
+                    true
+                }
 
                 else -> false
             }
@@ -159,8 +169,7 @@ class Report : AppCompatActivity() {
 
                     for (dateSnapshot in dataSnapshot.children) {
                         val date = dateSnapshot.key ?: continue
-                        val totalTime =
-                            dateSnapshot.child("Time").getValue(Long::class.java) ?: continue
+                        val totalTime = dateSnapshot.child("Time").getValue(Long::class.java) ?: continue
 
                         val totalHours = (totalTime / (1000 * 60 * 60)).toFloat()
                         val totalMinutes = ((totalTime % (1000 * 60 * 60)) / (1000 * 60)).toFloat()
@@ -457,6 +466,8 @@ class Report : AppCompatActivity() {
 
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val totalTimeRef = totalTimeTrackedRef.child(currentDate).child("Time")
+
+
         totalTimeRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 val totalMilliseconds = dataSnapshot.getValue(Long::class.java) ?: 0

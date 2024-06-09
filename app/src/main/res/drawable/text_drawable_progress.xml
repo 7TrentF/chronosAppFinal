@@ -1,0 +1,29 @@
+<!-- res/drawable/text_drawable_progress.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background color -->
+    <solid android:color="@color/yellow" />
+
+    <!-- Rounded corners (optional) -->
+    <corners android:radius="8dp" />
+
+    <!-- Size of the drawable -->
+    <size
+        android:width="64dp"
+        android:height="24dp" />
+
+    <!-- Padding around the text -->
+    <padding
+        android:left="8dp"
+        android:right="8dp"
+        android:top="4dp"
+        android:bottom="4dp" />
+
+    <!-- Text properties -->
+    <text
+        android:id="@+id/percentageText"
+        android:text="0%"
+        android:textColor="@color/red"
+        android:textSize="12sp"
+        android:gravity="center" />
+</shape>
+

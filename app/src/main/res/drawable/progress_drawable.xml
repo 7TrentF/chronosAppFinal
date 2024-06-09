@@ -1,0 +1,5 @@
+<clip xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/progress_clip"
+    android:drawable="@color/Goldenrod"
+    android:clipOrientation="horizontal"
+    android:gravity="left" />

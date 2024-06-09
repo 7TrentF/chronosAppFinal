@@ -18,6 +18,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
@@ -45,6 +46,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
     private val categoryTotalTime = mutableMapOf<String, Long>()
     private var database: DatabaseReference
     private var initialTotal: Long = 0
+
     init {
         // Initialize Firebase Database reference
         database = FirebaseDatabase.getInstance().reference
@@ -169,6 +171,50 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
             showBottomSheetDialog(holder.itemView.context, entry)
         }
     }
+
+
+    fun getDailyData(currentDate: String, userId: String, callback: (DailyGoal, Long) -> Unit) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val database = FirebaseDatabase.getInstance().reference
+
+
+        currentUser?.let { user ->
+
+            val userEntriesRef = database.child("user_entries").child(user.uid)
+            val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
+            val dailyGoalRef = userEntriesRef.child("DailyGoal")
+
+            dailyGoalRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val dailyGoal = snapshot.getValue(DailyGoal::class.java) ?: DailyGoal()
+
+                    totalTimeTrackedRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            val totalTimeTracked = snapshot.getValue(Long::class.java) ?: 0L
+                            callback(dailyGoal, totalTimeTracked)
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            Log.e(
+                                "Firebase",
+                                "Failed to retrieve totalTimeTracked",
+                                error.toException()
+                            )
+                        }
+                    })
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve daily goal", error.toException())
+                }
+            })
+        }
+    }
+
+
+
+
+
 
     private fun showBottomSheetDialog(context: Context, entry: TimesheetData) {
         val editHandler = TimesheetEdit(context, database)

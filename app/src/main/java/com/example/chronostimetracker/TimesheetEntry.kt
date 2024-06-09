@@ -1,5 +1,6 @@
 package com.example.chronostimetracker
 
+import android.app.Dialog
 import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
@@ -154,6 +155,15 @@ class TimesheetEntry : AppCompatActivity() {
                     // Open Report activity when the Report item is clicked
                     val intent = Intent(this, Report::class.java)
                     startActivity(intent)
+                    true
+                }
+                R.id.pomodoro -> {
+                    // Open Pomodoro dialog when the Pomodoro item is clicked
+                    val pomodoroDialog = Dialog(this)
+                    pomodoroDialog.setContentView(R.layout.dialog_pomodoro_timer)
+                    val pomodoroTimer = PomodoroTimer(this)
+                    pomodoroTimer.setupDialog(pomodoroDialog)
+                    pomodoroDialog.show()
                     true
                 }
                 else -> false

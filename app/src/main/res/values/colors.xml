@@ -15,5 +15,8 @@
     <color name="menu_item_background">#FF000000</color>
     <color name="menu_item_text">#FFFFFF</color>
     <color name="Goldenrod">#D3A121</color>
+    <color name="OpaqueGreen">#abf7b1</color>
+    <color name="orange">#FF8C00</color>
+    <color name="lightRed">#FF2C2C</color>
 
 </resources>

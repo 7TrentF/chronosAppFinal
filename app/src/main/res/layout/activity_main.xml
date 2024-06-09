@@ -41,7 +41,7 @@
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/my_toolbar"
-            android:layout_width="410dp"
+            android:layout_width="417dp"
             android:layout_height="72dp"
             android:background="#D3A121"
             android:elevation="4dp"
@@ -53,9 +53,6 @@
             app:layout_constraintTop_toTopOf="parent"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
             app:titleTextColor="@color/black" />
-        <!-- Main content view -->
-
-        <!-- Navigation drawer view -->
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/main"
@@ -65,15 +62,73 @@
             android:paddingTop="10dp">
 
 
-            <ProgressBar
-                android:id="@+id/progressBar"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-               android:progressDrawable="@drawable/custom_progress_bg"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="416dp"
+                android:layout_height="71dp"
+                android:layout_marginTop="70dp"
+                android:orientation="horizontal"
                 app:layout_constraintBottom_toTopOf="@+id/categorySpinner"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="@id/my_toolbar"
+                tools:ignore="NotSibling">
+
+                <TextView
+                    android:id="@+id/minGoalText"
+                    android:layout_width="23dp"
+                    android:layout_height="12dp"
+                    android:layout_margin="8dp"
+                    android:text="Min Goal: "
+                    android:textColor="@color/white"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/progressBar"
+                    app:layout_constraintHorizontal_bias="1.0"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_bias="0.363" />
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="272dp"
+                    android:layout_height="23dp"
+                    android:layout_marginBottom="4dp"
+                    android:progressDrawable="@drawable/custom_progress_drawable"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+
+                <TextView
+                    android:id="@+id/progressText"
+                    android:layout_width="34dp"
+                    android:layout_height="22dp"
+                    android:layout_centerInParent="true"
+                    android:layout_marginBottom="4dp"
+                    android:text="0%"
+                    android:textColor="@color/lightGreen"
+                    android:textSize="15sp"
+                    app:layout_constraintBottom_toTopOf="@+id/progressBar"
+                    app:layout_constraintEnd_toStartOf="@+id/maxGoalText"
+                    app:layout_constraintHorizontal_bias="0.108"
+                    app:layout_constraintStart_toEndOf="@+id/minGoalText" />
+
+                <TextView
+                    android:id="@+id/maxGoalText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:layout_margin="8dp"
+                    android:layout_marginTop="24dp"
+                    android:text="Max Goal: "
+                    android:textColor="@color/white"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_bias="0.774"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <!-- Other UI elements -->
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <Spinner
                 android:id="@+id/categorySpinner"
@@ -86,8 +141,8 @@
 
             <ScrollView
                 android:id="@+id/scrollView3"
-                android:layout_width="409dp"
-                android:layout_height="643dp"
+                android:layout_width="395dp"
+                android:layout_height="545dp"
                 android:fillViewport="true"
                 android:paddingBottom="70dp"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -120,11 +175,6 @@
         app:itemTextColor="@color/yellow"
         app:itemIconTint="@color/white"
         app:menu="@menu/mymenus" />
-
-
-
-
-
 
 
 </androidx.drawerlayout.widget.DrawerLayout>

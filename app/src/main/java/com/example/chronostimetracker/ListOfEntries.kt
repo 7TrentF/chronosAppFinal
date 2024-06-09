@@ -26,10 +26,15 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import java.util.concurrent.TimeUnit
 import android.app.DatePickerDialog
+import android.app.Dialog
 import android.content.ContentValues.TAG
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.util.Log
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.navigation.Navigation.findNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -41,6 +46,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import com.google.firebase.database.*
+
 
 class ListOfEntries : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
@@ -54,8 +60,9 @@ class ListOfEntries : AppCompatActivity() {
     private var startTime: Long = 0
     private var isTimerRunning = false
     private lateinit var currentUser: FirebaseUser
-
-
+    private lateinit var progressBar: ProgressBar
+    private lateinit var minGoalText: TextView
+    private lateinit var maxGoalText: TextView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -75,6 +82,13 @@ class ListOfEntries : AppCompatActivity() {
         supportActionBar?.title = "Chronos Timesheets"
 
         populateCategorySpinner()
+
+        // Initialize the progress bar
+        progressBar = findViewById(R.id.progressBar)
+        minGoalText = findViewById(R.id.minGoalText)
+        maxGoalText = findViewById(R.id.maxGoalText)
+
+
 
 
 
@@ -174,7 +188,15 @@ class ListOfEntries : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
-
+                R.id.pomodoro -> {
+                    // Open Pomodoro dialog when the Pomodoro item is clicked
+                    val pomodoroDialog = Dialog(this)
+                    pomodoroDialog.setContentView(R.layout.dialog_pomodoro_timer)
+                    val pomodoroTimer = PomodoroTimer(this)
+                    pomodoroTimer.setupDialog(pomodoroDialog)
+                    pomodoroDialog.show()
+                    true
+                }
 
                 else -> false
             }
@@ -188,9 +210,86 @@ class ListOfEntries : AppCompatActivity() {
 
 
 
+        val database = FirebaseDatabase.getInstance().reference
+        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val currentUser = FirebaseAuth.getInstance().currentUser
 
+        currentUser?.let { user ->
+            val userEntriesRef = database.child("user_entries").child(user.uid)
+            val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
+            val dailyGoalRef = userEntriesRef.child("DailyGoal")
+
+            // Retrieve min and max goals from Firebase
+            dailyGoalRef.child(currentDate).addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val minGoal = dataSnapshot.child("minGoal").getValue(Int::class.java) ?: 0
+                    val maxGoal = dataSnapshot.child("maxGoal").getValue(Int::class.java) ?: 0
+
+                    minGoalText.text = " "
+
+                    // Set the text color to white
+                    maxGoalText.setTextColor(Color.WHITE)
+                    // Set the text
+                    maxGoalText.text = "Goal: $maxGoal hours"
+
+                    // Log the minGoal and maxGoal
+                    Log.d("Firebase", "Min Goal: $minGoal, Max Goal: $maxGoal")
+
+                    // Set the maxGoal as the maximum range for the progress bar
+                    val maxRange = maxGoal.toDouble()
+
+                    // Now retrieve and calculate progress as you did before
+                    val totalTimeRef = totalTimeTrackedRef.child(currentDate).child("Time")
+                    totalTimeRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(dataSnapshot: DataSnapshot) {
+                            val totalTimeTracked = dataSnapshot.getValue(Long::class.java) ?: 0
+
+                            // Calculate progress as a percentage of the maximum range
+                            val progress = (totalTimeTracked.toDouble() / (maxRange * 60 * 60 * 1000)) * 100
+                            val progressPercentage = progress.toInt()
+                            findViewById<TextView>(R.id.percentageText)?.text = "$progressPercentage%"
+
+                            val progressText = findViewById<TextView>(R.id.progressText)
+
+                            // Change text color based on progress percentage
+                            val textColor = when {
+                                progressPercentage < 33 -> ContextCompat.getColor(this@ListOfEntries, R.color.red) // Change to your desired color resource
+                                progressPercentage < 50 -> ContextCompat.getColor(this@ListOfEntries, R.color.orange) // Change to your desired color resource
+                                else -> ContextCompat.getColor(this@ListOfEntries, R.color.lightGreen) // Change to your desired color resource
+                            }
+
+                            progressText.setTextColor(textColor)
+
+                            // Update ProgressBar with progress
+                            progressBar.progress = progress.toInt()
+                            progressText.text = "$progressPercentage%"
+
+// Determine color based on progress percentage
+                            val progressColor = when {
+                                progressPercentage < 33 -> R.color.red // Red for low progress
+                                progressPercentage < 50 -> R.color.orange // Yellow for medium progress
+                                else -> R.color.lightGreen // Green for high progress
+                            }
+
+// Set ProgressBar color
+                            val progressBarColor = ContextCompat.getColor(this@ListOfEntries, progressColor)
+                            progressBar.progressTintList = ColorStateList.valueOf(progressBarColor)
+
+
+                          //  val lightGreenColor = ContextCompat.getColor(this@ListOfEntries, R.color.lightGreen)
+                          //  progressBar.progressTintList = ColorStateList.valueOf(lightGreenColor)
+                        }
+                        override fun onCancelled(databaseError: DatabaseError) {
+                            Log.e("Firebase", "Failed to check totalTimeTracked for the current day", databaseError.toException())
+                        }
+                    })
+                }
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve min and max goals", databaseError.toException())
+                }
+            })
+        }
     }
-
 
     fun checkStartTimeMatchesCurrentTime(context: Context) {
         val currentUser = FirebaseAuth.getInstance().currentUser

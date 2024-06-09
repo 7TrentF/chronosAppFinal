@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/drawable/custom_progress_drawable.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background layer for the progress bar with black border -->
+    <item>
+        <shape android:shape="rectangle">
+            <!-- Black border -->
+            <stroke
+                android:width="5dp"
+                android:color="@android:color/white" />
+
+            <!-- Red background -->
+            <solid android:color="@color/OpaqueGreen" />
+            <corners android:radius="4dp" />
+        </shape>
+    </item>
+
+    <!-- Progress layer with percentage text -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape android:shape="rectangle">
+                <!-- Red color for progress -->
+                <solid android:color="@color/lightRed" />
+                <corners android:radius="4dp" />
+            </shape>
+        </clip>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/text_drawable_progress" />
+    </item>
+
+</layer-list>
