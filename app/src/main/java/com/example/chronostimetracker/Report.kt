@@ -69,13 +69,11 @@ class Report : AppCompatActivity() {
         supportActionBar?.title = "Reports"
 
         pieChart = findViewById(R.id.pieChart)
-       // configurePieChart()
+        // configurePieChart()
         //setupLineChart()
 
         fetchAndPopulateLineChart()
 
-        val categoryContainer = findViewById<FrameLayout>(R.id.category_container)
-        val pieChartContainer = findViewById<FrameLayout>(R.id.pie_chart_container)
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.BottomNavigationView)
         val btnProject: Button = findViewById(R.id.btnProject)
 
@@ -110,49 +108,48 @@ class Report : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+
                 R.id.action_add -> {
                     val intent = Intent(this, TimesheetEntry::class.java)
                     startActivity(intent)
                     true
                 }
+
                 else -> false
             }
         }
 
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->
-            val database = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
+            val database =
+                FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid)
             retrieveCategoryTimes(database)
             displayTotalTimeTracked(database)
         }
-
-
 
         currentUser?.let { user ->
             val database = FirebaseDatabase.getInstance().reference
             val userEntriesRef = database.child("user_entries").child(user.uid)
             val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
 
-
-
             totalTimeTrackedRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     val entries = mutableListOf<Entry>()
                     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val dateLabels = mutableListOf<String>() // List to hold date labels
 
                     for (dateSnapshot in dataSnapshot.children) {
                         val date = dateSnapshot.key ?: continue
-                        val totalTime = dateSnapshot.child("Time").getValue(Long::class.java) ?: continue
+                        val totalTime =
+                            dateSnapshot.child("Time").getValue(Long::class.java) ?: continue
 
                         val totalHours = (totalTime / (1000 * 60 * 60)).toFloat()
                         val totalMinutes = ((totalTime % (1000 * 60 * 60)) / (1000 * 60)).toFloat()
                         val totalSeconds = ((totalTime % (1000 * 60)) / 1000).toFloat()
                         val totalTimeInHours = totalHours + totalMinutes / 60 + totalSeconds / 3600
 
-                        val dateParsed = dateFormat.parse(date)
-                        val dateMillis = dateParsed?.time?.toFloat() ?: continue
-
-                        entries.add(Entry(dateMillis, totalTimeInHours))
+                        dateLabels.add(date) // Add date to the list
+                        entries.add(Entry(dateLabels.size - 1.toFloat(), totalTimeInHours))
                     }
 
                     val dailyGoalRef = userEntriesRef.child("DailyGoal")
@@ -164,44 +161,51 @@ class Report : AppCompatActivity() {
                         override fun onDataChange(dailyGoalSnapshot: DataSnapshot) {
                             for (goalSnapshot in dailyGoalSnapshot.children) {
                                 val date = goalSnapshot.key ?: continue
-                                val minGoal = goalSnapshot.child("minGoal").getValue(Int::class.java)?.toFloat() ?: continue
-                                val maxGoal = goalSnapshot.child("maxGoal").getValue(Int::class.java)?.toFloat() ?: continue
+                                val minGoal =
+                                    goalSnapshot.child("minGoal").getValue(Int::class.java)
+                                        ?.toFloat() ?: continue
+                                val maxGoal =
+                                    goalSnapshot.child("maxGoal").getValue(Int::class.java)
+                                        ?.toFloat() ?: continue
 
-                                val dateParsed = dateFormat.parse(date)
-                                val dateMillis = dateParsed?.time?.toFloat() ?: continue
-
-                                minGoalEntries.add(Entry(dateMillis, minGoal))
-                                maxGoalEntries.add(Entry(dateMillis, maxGoal))
+                                val dateIndex = dateLabels.indexOf(date)
+                                if (dateIndex != -1) {
+                                    minGoalEntries.add(Entry(dateIndex.toFloat(), minGoal))
+                                    maxGoalEntries.add(Entry(dateIndex.toFloat(), maxGoal))
+                                }
                             }
 
-                            // Sort entries by X value (date)
-                            entries.sortBy { it.x }
-                            minGoalEntries.sortBy { it.x }
-                            maxGoalEntries.sortBy { it.x }
-
                             // Update LineChart with the retrieved data
-                            updateLineChart(entries, minGoalEntries, maxGoalEntries)
+                            updateLineChart(entries, minGoalEntries, maxGoalEntries, dateLabels)
                         }
 
                         override fun onCancelled(databaseError: DatabaseError) {
-                            Log.e("Firebase", "Failed to retrieve daily goals", databaseError.toException())
+                            Log.e(
+                                "Firebase",
+                                "Failed to retrieve daily goals",
+                                databaseError.toException()
+                            )
                         }
                     })
                 }
 
                 override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve totalTimeTracked", databaseError.toException())
+                    Log.e(
+                        "Firebase",
+                        "Failed to retrieve totalTimeTracked",
+                        databaseError.toException()
+                    )
                 }
             })
         }
-
-
-
-
     }
 
-
-    fun updateLineChart(entries: List<Entry>, minGoalEntries: List<Entry>, maxGoalEntries: List<Entry>) {
+    fun updateLineChart(
+        entries: List<Entry>,
+        minGoalEntries: List<Entry>,
+        maxGoalEntries: List<Entry>,
+        dateLabels: List<String> // List of date labels corresponding to the total time tracked
+    ) {
         val lineChart = findViewById<LineChart>(R.id.lineChart)
 
         val lineDataSet = LineDataSet(entries, "Total Time Tracked")
@@ -233,17 +237,19 @@ class Report : AppCompatActivity() {
 
         // Customize the line appearance for min goal
         minGoalDataSet.color = Color.GREEN
-        minGoalDataSet.valueTextColor = Color.GREEN
+        minGoalDataSet.valueTextColor = Color.WHITE
+        minGoalDataSet.valueTextSize = 12f
         minGoalDataSet.lineWidth = 2f
-        minGoalDataSet.circleRadius = 0f
-        minGoalDataSet.setDrawCircles(false)
+        minGoalDataSet.circleRadius = 4f
+        minGoalDataSet.setDrawCircles(true)
 
         // Customize the line appearance for max goal
         maxGoalDataSet.color = Color.RED
-        maxGoalDataSet.valueTextColor = Color.RED
+        maxGoalDataSet.valueTextColor = Color.WHITE
+        maxGoalDataSet.valueTextSize = 12f
         maxGoalDataSet.lineWidth = 2f
-        maxGoalDataSet.circleRadius = 0f
-        maxGoalDataSet.setDrawCircles(false)
+        maxGoalDataSet.circleRadius = 4f
+        maxGoalDataSet.setDrawCircles(true)
 
         // Create LineData with the customized datasets
         val lineData = LineData(lineDataSet, minGoalDataSet, maxGoalDataSet)
@@ -252,17 +258,21 @@ class Report : AppCompatActivity() {
         // Customizing the X-axis to display dates
         val xAxis = lineChart.xAxis
         xAxis.valueFormatter = object : ValueFormatter() {
-            private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
             override fun getFormattedValue(value: Float): String {
-                return dateFormat.format(Date(value.toLong()))
+                val index = value.toInt()
+                return if (index >= 0 && index < dateLabels.size) dateLabels[index] else ""
             }
         }
+
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.textSize = 12f
         xAxis.textColor = Color.WHITE
         xAxis.labelRotationAngle = -45f
         xAxis.granularity = 1f
+        xAxis.setLabelCount(dateLabels.size, true) // Ensure the number of labels matches the dates
+
+        // Add extra offsets to the chart
+        lineChart.setExtraOffsets(0f, 60f, 40f, 70f)
 
         // Customizing the Y-axis
         val yAxisLeft = lineChart.axisLeft
@@ -270,7 +280,7 @@ class Report : AppCompatActivity() {
         yAxisLeft.textColor = Color.WHITE
         yAxisLeft.axisMinimum = 0f
         val maxEntryValue = (entries + minGoalEntries + maxGoalEntries).maxOfOrNull { it.y } ?: 0f
-        yAxisLeft.axisMaximum = if (maxEntryValue < 1f) 1f else maxEntryValue
+        yAxisLeft.axisMaximum = maxEntryValue + 1
 
         // Set Y-axis label
         yAxisLeft.valueFormatter = object : ValueFormatter() {
@@ -282,10 +292,6 @@ class Report : AppCompatActivity() {
         val yAxisRight = lineChart.axisRight
         yAxisRight.isEnabled = false
 
-        // Adding labels to the axes
-        xAxis.setLabelCount(entries.size, true)
-        yAxisLeft.setLabelCount(6, true)
-
         // Customizing the LineChart
         lineChart.setBackgroundColor(Color.BLACK)
         lineChart.xAxis.setDrawGridLines(false)
@@ -296,20 +302,42 @@ class Report : AppCompatActivity() {
         legend.form = Legend.LegendForm.LINE
         legend.textColor = Color.WHITE
         legend.textSize = 14f
+        legend.verticalAlignment = Legend.LegendVerticalAlignment.TOP
+        legend.horizontalAlignment = Legend.LegendHorizontalAlignment.CENTER
+        legend.orientation = Legend.LegendOrientation.HORIZONTAL
+        legend.setDrawInside(false) // To prevent overlapping with chart content
+
+        // Adding spacing between legend items
+        legend.xEntrySpace = 15f // Adjust the horizontal space between legend items
+        legend.yEntrySpace = 10f // Adjust the vertical space between legend items
+
+        // Add datasets to LineData
+        lineChart.data = lineData
 
         // Description customization
-        val description = Description()
-        description.text = "Time Tracked Over Days"
-        description.textColor = Color.WHITE
-        description.textSize = 14f
-        lineChart.description = description
+        // Set Description
+        val description = Description().apply {
+            text = "Time Tracked Over Days"
+            textColor = Color.WHITE
+            textSize = 20f
+        }
+
+// Add layout listener to ensure the chart dimensions are calculated
+        lineChart.viewTreeObserver.addOnGlobalLayoutListener {
+            // Calculate chart dimensions
+            val chartWidth = lineChart.width
+            val chartHeight = lineChart.height
+
+            // Set position of description to bottom center
+            description.setPosition(chartWidth / 2f, chartHeight.toFloat() - 50f) // X position is center, Y position is near the bottom
+
+            // Apply description to the chart
+            lineChart.description = description
+        }
 
         // Refresh the chart
         lineChart.invalidate()
     }
-
-
-
 
     private fun configurePieChart() {
         pieChart.setUsePercentValues(true)
@@ -506,201 +534,5 @@ class Report : AppCompatActivity() {
         // Convert milliseconds to days
         return TimeUnit.MILLISECONDS.toDays(diffInMillis)
     }
-    private fun convertNumericToDate(numericDate: Long): String {
-        // Convert numeric date back to date string
-        val referenceDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse("2024-01-01") // Use your reference date
-        val calendar = Calendar.getInstance()
-        calendar.time = referenceDate
-        calendar.add(Calendar.DAY_OF_YEAR, numericDate.toInt())
-        return SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
-    }
 
-
-
-    private fun setupLineChart() {
-        val lineChart = findViewById<LineChart>(R.id.lineChart)
-
-        // Customize LineChart
-        lineChart.apply {
-            description.isEnabled = false
-            legend.isEnabled = false
-            setDrawGridBackground(false)
-            xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.textColor = Color.WHITE
-            axisLeft.textColor = Color.WHITE
-
-            // Set Y-axis bounds based on the range of min/max goals and total time tracked
-            val maxY = calculateMaxYValue() // Implement this function to calculate the maximum Y-axis value
-            val minY = calculateMinYValue() // Implement this function to calculate the minimum Y-axis value
-
-            axisLeft.axisMinimum = minY
-            axisLeft.axisMaximum = maxY
-        }
-    }
-
-    private fun calculateMaxYValue(): Float {
-        val database = FirebaseDatabase.getInstance().reference
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        var maxY = Float.MIN_VALUE
-
-        currentUser?.let { user ->
-            val userEntriesRef = database.child("user_entries").child(user.uid)
-
-            // Fetch Daily Goals
-            val dailyGoalRef = userEntriesRef.child("DailyGoal")
-            dailyGoalRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    for (snapshot in dataSnapshot.children) {
-                        val dailyGoal = snapshot.getValue(DailyGoal::class.java)
-                        dailyGoal?.let {
-                            val maxGoal = dailyGoal.maxGoal.toFloat()
-                            if (maxGoal > maxY) {
-                                maxY = maxGoal
-                            }
-                        }
-                    }
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve daily goals", databaseError.toException())
-                }
-            })
-
-            // Fetch Total Time Tracked
-            val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
-            totalTimeTrackedRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    for (snapshot in dataSnapshot.children) {
-                        val totalMilliseconds = snapshot.child("Time").getValue(Long::class.java) ?: 0
-                        val totalHours = totalMilliseconds / (1000 * 60 * 60)
-                        if (totalHours > maxY) {
-                            maxY = totalHours.toFloat()
-                        }
-                    }
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve total time tracked", databaseError.toException())
-                }
-            })
-        }
-
-        return maxY
-    }
-
-    private fun calculateMinYValue(): Float {
-        val database = FirebaseDatabase.getInstance().reference
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        var minY = Float.MAX_VALUE
-
-        currentUser?.let { user ->
-            val userEntriesRef = database.child("user_entries").child(user.uid)
-
-            // Fetch Daily Goals
-            val dailyGoalRef = userEntriesRef.child("DailyGoal")
-            dailyGoalRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    for (snapshot in dataSnapshot.children) {
-                        val dailyGoal = snapshot.getValue(DailyGoal::class.java)
-                        dailyGoal?.let {
-                            val minGoal = dailyGoal.minGoal.toFloat()
-                            if (minGoal < minY) {
-                                minY = minGoal
-                            }
-                        }
-                    }
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve daily goals", databaseError.toException())
-                }
-            })
-
-            // Fetch Total Time Tracked
-            val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
-            totalTimeTrackedRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    for (snapshot in dataSnapshot.children) {
-                        val totalMilliseconds = snapshot.child("Time").getValue(Long::class.java) ?: 0
-                        val totalHours = totalMilliseconds / (1000 * 60 * 60)
-                        if (totalHours < minY) {
-                            minY = totalHours.toFloat()
-                        }
-                    }
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve total time tracked", databaseError.toException())
-                }
-            })
-        }
-
-        return minY
-    }
-
-
-
-    private fun inflateProjectReportLayout() {
-        val inflater = LayoutInflater.from(this)
-        val projectReportView = inflater.inflate(R.layout.project_report, viewContainer, false)
-        viewContainer.removeAllViews()
-        viewContainer.addView(projectReportView)
-        viewContainer.visibility = View.VISIBLE
-
-        val lineChart = projectReportView.findViewById<LineChart>(R.id.lineChart)
-    }
-
-    private fun updateChart(
-        lineChart: LineChart,
-        entries: MutableList<Entry>,
-        minGoalEntries: MutableList<Entry>,
-        maxGoalEntries: MutableList<Entry>,
-        dateList: MutableList<String>
-    ) {
-        val dataSet = LineDataSet(entries, "Hours Worked")
-        val minGoalDataSet = LineDataSet(minGoalEntries, "Min Goal")
-        val maxGoalDataSet = LineDataSet(maxGoalEntries, "Max Goal")
-
-        dataSet.color = Color.BLUE
-        minGoalDataSet.color = Color.GREEN
-        maxGoalDataSet.color = Color.RED
-
-        val lineData = LineData(dataSet, minGoalDataSet, maxGoalDataSet)
-        lineChart.data = lineData
-
-        // Set the custom formatter for the x-axis
-        val xAxis = lineChart.xAxis
-        xAxis.valueFormatter = IndexAxisValueFormatter(dateList)
-        xAxis.granularity = 1f
-        xAxis.position = XAxis.XAxisPosition.BOTTOM
-
-        lineChart.invalidate()
-    }
-
-
-    private fun createStyledTextView(context: Context, text: String, topPadding: Int): TextView {
-        return TextView(context).apply {
-            this.text = text
-            setTextColor(ContextCompat.getColor(context, R.color.white))
-            textSize = 16f
-
-            layoutParams = ViewGroup.MarginLayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply {
-                setMargins(30, topPadding, 30, 0)
-            }
-
-            setPadding(0, topPadding, 0, 0)
-        }
-    }
-
-    fun addCategoryTextViews(categoryContainer: ViewGroup, categories: List<String>, formattedTimes: List<String>) {
-        var topPadding = 40
-        categories.zip(formattedTimes).forEach { (category, formattedTime) ->
-            val textView = createStyledTextView(categoryContainer.context, "Category: $category $formattedTime", topPadding)
-            categoryContainer.addView(textView)
-            topPadding += 40
-        }
-    }
 }
