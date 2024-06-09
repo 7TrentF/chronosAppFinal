@@ -5,6 +5,7 @@ package com.example.chronostimetracker
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.os.Handler
@@ -246,6 +247,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
     }
 
 
+
     fun showTimerDialog(context: Context,  entry: TimesheetData, position: Int) {
         val currentUser = FirebaseAuth.getInstance().currentUser
 
@@ -301,8 +303,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                 // Get the current date in the format "YYYY-MM-DD"
                 val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
-
-
                 // Check if an entry for the current day already exists in totalTimeTracked
                 totalTimeTrackedRef.child(currentDate).addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
@@ -318,43 +318,32 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
 
                 timesheetEntryRef.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        val existingElapsedTime =
-                            dataSnapshot.child("elapsedTime").getValue(Long::class.java) ?: 0
+                        val existingElapsedTime = dataSnapshot.child("elapsedTime").getValue(Long::class.java) ?: 0
                         val newTotalElapsedTime = existingElapsedTime + elapsedTime
 
                         // Update the elapsed time in Firebase
                         timesheetEntryRef.child("elapsedTime").setValue(newTotalElapsedTime)
                             .addOnSuccessListener {
-                                Log.d(
-                                    "Firebase",
-                                    "Successfully updated elapsedTime for uniqueId $entry.uniqueId"
-                                )
+                                Log.d("Firebase", "Successfully updated elapsedTime for uniqueId $entry.uniqueId")
 
                                 // Update totalTimeTracked for the current day
                                 totalTimeTrackedRef.child(currentDate).child("Time")
                                     .setValue(ServerValue.increment(elapsedTime))
                                     .addOnSuccessListener {
-                                        Log.d(
-                                            "Firebase",
-                                            "Successfully updated totalTimeTracked for the current day"
-                                        )
+                                        Log.d("Firebase", "Successfully updated totalTimeTracked for the current day")
+
+                                        // Send broadcast to update the progress bar
+                                        val intent = Intent("com.example.UPDATE_PROGRESS")
+                                        context.sendBroadcast(intent)
                                     }
                             }
                             .addOnFailureListener { e ->
-                                Log.e(
-                                    "Firebase",
-                                    "Failed to update elapsedTime for uniqueId $entry.uniqueId",
-                                    e
-                                )
+                                Log.e("Firebase", "Failed to update elapsedTime for uniqueId $entry.uniqueId", e)
                             }
                     }
 
                     override fun onCancelled(databaseError: DatabaseError) {
-                        Log.e(
-                            "Firebase",
-                            "Failed to retrieve elapsedTime for uniqueId $entry.uniqueId",
-                            databaseError.toException()
-                        )
+                        Log.e("Firebase", "Failed to retrieve elapsedTime for uniqueId $entry.uniqueId", databaseError.toException())
                     }
                 })
 
@@ -363,45 +352,32 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                 val categoryRef = database.child("CategoryTimes").child(category)
                 categoryRef.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(dataSnapshot: DataSnapshot) {
-                        val totalTime  =  dataSnapshot.child("totalTime").getValue(Long::class.java) ?: 0
+                        val totalTime = dataSnapshot.child("totalTime").getValue(Long::class.java) ?: 0
 
                         val newCategoryTotalTime = totalTime + elapsedTime
                         categoryRef.child("totalTime").setValue(newCategoryTotalTime)
                             .addOnSuccessListener {
-                                Log.d(
-                                    "Firebase",
-                                    "Successfully updated totalTime for category $category"
-                                )
+                                Log.d("Firebase", "Successfully updated totalTime for category $category")
                                 // Save the category total times
                                 saveCategoryTotalTimes(context)
                             }
                             .addOnFailureListener { e ->
-                                Log.e(
-                                    "Firebase",
-                                    "Failed to update totalTime for category $category",
-                                    e
-                                )
+                                Log.e("Firebase", "Failed to update totalTime for category $category", e)
                             }
                     }
 
                     override fun onCancelled(databaseError: DatabaseError) {
-                        Log.e(
-                            "Firebase",
-                            "Failed to retrieve totalTime for category $category",
-                            databaseError.toException()
-                        )
+                        Log.e("Firebase", "Failed to retrieve totalTime for category $category", databaseError.toException())
                     }
                 })
 
                 // Close the dialog
                 dialog.dismiss()
 
-
                 // Set a listener to be called when the dialog is dismissed
                 dialog.setOnDismissListener {
                     // Update the timerTextView in the ViewHolder
                     val entry = entries[position]
-
 
                     database = FirebaseDatabase.getInstance().reference
 
@@ -411,30 +387,21 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                     // Create a reference to the Timesheet Entries child under the user's path
                     val timesheetEntryRef = userEntriesRef.child("Timesheet Entries")
 
-
-
                     timesheetEntryRef.addListenerForSingleValueEvent(object : ValueEventListener {
                         override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            val savedElapsedTime =
-                                dataSnapshot.child("elapsedTime").getValue(Long::class.java) ?: 0
-                            Log.d(
-                                "YourTag",
-                                "Saved Elapsed Time for unique ID ${entry.uniqueId}: $savedElapsedTime"
-                            )
+                            val savedElapsedTime = dataSnapshot.child("elapsedTime").getValue(Long::class.java) ?: 0
+                            Log.d("YourTag", "Saved Elapsed Time for unique ID ${entry.uniqueId}: $savedElapsedTime")
                             val formattedTime = formatElapsedTime(savedElapsedTime)
                             notifyItemChanged(position, formattedTime)
                         }
 
                         override fun onCancelled(databaseError: DatabaseError) {
-                            Log.e(
-                                "YourTag",
-                                "Failed to retrieve elapsedTime for unique ID ${entry.uniqueId}",
-                                databaseError.toException()
-                            )
+                            Log.e("YourTag", "Failed to retrieve elapsedTime for unique ID ${entry.uniqueId}", databaseError.toException())
                         }
                     })
                 }
             }
+
 
             dialog.show()
 
@@ -448,7 +415,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
 
 
 
-    private fun saveCategoryTotalTimes(context: Context) {
+            private fun saveCategoryTotalTimes(context: Context) {
         // Get the current authenticated user
         val currentUser = FirebaseAuth.getInstance().currentUser
 

@@ -27,7 +27,9 @@ import androidx.core.view.GravityCompat
 import java.util.concurrent.TimeUnit
 import android.app.DatePickerDialog
 import android.app.Dialog
+import android.content.BroadcastReceiver
 import android.content.ContentValues.TAG
+import android.content.IntentFilter
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.Log
@@ -63,6 +65,13 @@ class ListOfEntries : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
     private lateinit var minGoalText: TextView
     private lateinit var maxGoalText: TextView
+    private lateinit var progressText: TextView
+
+    private val progressUpdateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            updateProgressBarAndTextViews()
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -72,6 +81,17 @@ class ListOfEntries : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+
+            progressBar = findViewById(R.id.progressBar)
+            progressText = findViewById(R.id.progressText)
+
+            // Register the broadcast receiver
+            registerReceiver(progressUpdateReceiver, IntentFilter("com.example.UPDATE_PROGRESS"))
+
+
+
+
 
 
 
@@ -89,7 +109,8 @@ class ListOfEntries : AppCompatActivity() {
         maxGoalText = findViewById(R.id.maxGoalText)
 
 
-
+        // Register the broadcast receiver
+        registerReceiver(progressUpdateReceiver, IntentFilter("com.example.UPDATE_PROGRESS"))
 
 
         // Initialize RecyclerView
@@ -249,7 +270,7 @@ class ListOfEntries : AppCompatActivity() {
                             val progressPercentage = progress.toInt()
                             findViewById<TextView>(R.id.percentageText)?.text = "$progressPercentage%"
 
-                            val progressText = findViewById<TextView>(R.id.progressText)
+
 
                             // Change text color based on progress percentage
                             val textColor = when {
@@ -291,49 +312,11 @@ class ListOfEntries : AppCompatActivity() {
         }
     }
 
-    fun checkStartTimeMatchesCurrentTime(context: Context) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        currentUser?.let { user ->
-            val userEntriesRef = FirebaseDatabase.getInstance().reference.child("user_entries").child(user.uid).child("Timesheet Entries")
 
-            userEntriesRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val currentTimeMillis = System.currentTimeMillis()
-                    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-                    val currentFormattedTime = sdf.format(Date(currentTimeMillis))
-
-                    for (entrySnapshot in dataSnapshot.children) {
-                        val entry = entrySnapshot.getValue(TimesheetData::class.java)
-                        entry?.let {
-                            // Compare start time to the current formatted time
-                            if (it.startTime == currentFormattedTime) {
-                                val projectName = it.projectName
-                                val description = it.description
-                                val message = "Start your timesheet entry for project '$projectName': $description"
-                                Log.d("TimesheetAlert", message)  // Log the message
-                                showAlert(context, message)
-                            }
-                        }
-                    }
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve timesheet entries", databaseError.toException())
-                }
-            })
-        }
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(progressUpdateReceiver)
     }
-
-    private fun showAlert(context: Context, message: String) {
-        AlertDialog.Builder(context)
-            .setTitle("Start Timesheet Entry")
-            .setMessage(message)
-            .setPositiveButton("OK") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
-    }
-
 
     override fun onStart() {
         super.onStart()
@@ -341,6 +324,73 @@ class ListOfEntries : AppCompatActivity() {
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser != null) {
             checkDailyGoalSet()
+        }
+    }
+
+
+
+
+
+
+    private fun updateProgressBarAndTextViews() {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            val database = FirebaseDatabase.getInstance().reference
+            val userEntriesRef = database.child("user_entries").child(user.uid)
+            val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
+            val dailyGoalRef = userEntriesRef.child("DailyGoal")
+            val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+            dailyGoalRef.child(currentDate).addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val maxGoal = dataSnapshot.child("maxGoal").getValue(Int::class.java) ?: 0
+                    val maxRange = maxGoal.toDouble()
+
+                    val totalTimeRef = totalTimeTrackedRef.child(currentDate).child("Time")
+                    totalTimeRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(dataSnapshot: DataSnapshot) {
+                            val totalTimeTracked = dataSnapshot.getValue(Long::class.java) ?: 0
+
+                            // Calculate progress as a percentage of the maximum range
+                            val progress = (totalTimeTracked.toDouble() / (maxRange * 60 * 60 * 1000)) * 100
+                            val progressPercentage = progress.toInt()
+                            findViewById<TextView>(R.id.percentageText)?.text = "$progressPercentage%"
+
+                            // Change text color based on progress percentage
+                            val textColor = when {
+                                progressPercentage < 33 -> ContextCompat.getColor(this@ListOfEntries, R.color.red)
+                                progressPercentage < 50 -> ContextCompat.getColor(this@ListOfEntries, R.color.orange)
+                                else -> ContextCompat.getColor(this@ListOfEntries, R.color.lightGreen)
+                            }
+
+                            progressText.setTextColor(textColor)
+
+                            // Update ProgressBar with progress
+                            progressBar.progress = progress.toInt()
+                            progressText.text = "$progressPercentage%"
+
+                            // Determine color based on progress percentage
+                            val progressColor = when {
+                                progressPercentage < 33 -> R.color.red
+                                progressPercentage < 50 -> R.color.orange
+                                else -> R.color.lightGreen
+                            }
+
+                            // Set ProgressBar color
+                            val progressBarColor = ContextCompat.getColor(this@ListOfEntries, progressColor)
+                            progressBar.progressTintList = ColorStateList.valueOf(progressBarColor)
+                        }
+
+                        override fun onCancelled(databaseError: DatabaseError) {
+                            Log.e("Firebase", "Failed to check totalTimeTracked for the current day", databaseError.toException())
+                        }
+                    })
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e("Firebase", "Failed to retrieve min and max goals", databaseError.toException())
+                }
+            })
         }
     }
 

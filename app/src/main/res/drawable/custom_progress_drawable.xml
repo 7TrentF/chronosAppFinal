@@ -20,6 +20,7 @@
     <item android:id="@android:id/progress">
         <clip>
             <shape android:shape="rectangle">
+
                 <!-- Red color for progress -->
                 <solid android:color="@color/lightRed" />
                 <corners android:radius="4dp" />
