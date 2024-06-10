@@ -138,6 +138,7 @@ class ListOfEntries : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+
                 R.id.logout -> {
                     // Sign out the current user
                     FirebaseAuth.getInstance().signOut()
@@ -186,12 +187,14 @@ class ListOfEntries : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+
                 R.id.action_report -> {
                     // Open Report activity when the Report item is clicked
                     val intent = Intent(this, Report::class.java)
                     startActivity(intent)
                     true
                 }
+
                 R.id.pomodoro -> {
                     // Open Pomodoro dialog when the Pomodoro item is clicked
                     val pomodoroDialog = Dialog(this)
@@ -221,78 +224,116 @@ class ListOfEntries : AppCompatActivity() {
             val dailyGoalRef = userEntriesRef.child("DailyGoal")
 
             // Retrieve min and max goals from Firebase
-            dailyGoalRef.child(currentDate).addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val minGoal = dataSnapshot.child("minGoal").getValue(Int::class.java) ?: 0
-                    val maxGoal = dataSnapshot.child("maxGoal").getValue(Int::class.java) ?: 0
+            dailyGoalRef.child(currentDate)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        val minGoal = dataSnapshot.child("minGoal").getValue(Int::class.java) ?: 0
+                        val maxGoal = dataSnapshot.child("maxGoal").getValue(Int::class.java) ?: 0
 
-                    minGoalText.text = " "
+                        // Set text color to white for goals
+                        minGoalText.setTextColor(Color.WHITE)
+                        maxGoalText.setTextColor(Color.WHITE)
 
-                    // Set the text color to white
-                    maxGoalText.setTextColor(Color.WHITE)
-                    // Set the text
-                    maxGoalText.text = "Goal: $maxGoal hours"
+                        if (maxGoal == 0) {
+                            // If maxGoal is not set, show blank progress bar with 0%
+                            minGoalText.text = " "
+                            maxGoalText.text = "Goal: Not Set"
+                            findViewById<TextView>(R.id.percentageText)?.text = "0%"
+                            progressBar.progress = 0
+                            progressText.text = "0%"
+                            progressBar.progressTintList = ColorStateList.valueOf(
+                                ContextCompat.getColor(
+                                    this@ListOfEntries,
+                                    R.color.red
+                                )
+                            )
+                        } else {
+                            // Set the text for goals
+                            minGoalText.text = " "
+                            maxGoalText.text = "Goal: $maxGoal hours"
 
-                    // Log the minGoal and maxGoal
-                    Log.d("Firebase", "Min Goal: $minGoal, Max Goal: $maxGoal")
+                            // Log the minGoal and maxGoal
+                            Log.d("Firebase", "Min Goal: $minGoal, Max Goal: $maxGoal")
 
-                    // Set the maxGoal as the maximum range for the progress bar
-                    val maxRange = maxGoal.toDouble()
+                            // Set the maxGoal as the maximum range for the progress bar
+                            val maxRange = maxGoal.toDouble()
 
-                    // Now retrieve and calculate progress as you did before
-                    val totalTimeRef = totalTimeTrackedRef.child(currentDate).child("Time")
-                    totalTimeRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                        override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            val totalTimeTracked = dataSnapshot.getValue(Long::class.java) ?: 0
+                            // Now retrieve and calculate progress as you did before
+                            val totalTimeRef = totalTimeTrackedRef.child(currentDate).child("Time")
+                            totalTimeRef.addListenerForSingleValueEvent(object :
+                                ValueEventListener {
+                                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                                    val totalTimeTracked =
+                                        dataSnapshot.getValue(Long::class.java) ?: 0
 
-                            // Calculate progress as a percentage of the maximum range
-                            val progress = (totalTimeTracked.toDouble() / (maxRange * 60 * 60 * 1000)) * 100
-                            val progressPercentage = progress.toInt()
-                            findViewById<TextView>(R.id.percentageText)?.text = "$progressPercentage%"
+                                    // Calculate progress as a percentage of the maximum range
+                                    val progress =
+                                        (totalTimeTracked.toDouble() / (maxRange * 60 * 60 * 1000)) * 100
+                                    val progressPercentage = progress.toInt()
+                                    findViewById<TextView>(R.id.percentageText)?.text =
+                                        "$progressPercentage%"
 
+                                    // Change text color based on progress percentage
+                                    val textColor = when {
+                                        progressPercentage < 33 -> ContextCompat.getColor(
+                                            this@ListOfEntries,
+                                            R.color.red
+                                        )
 
+                                        progressPercentage < 50 -> ContextCompat.getColor(
+                                            this@ListOfEntries,
+                                            R.color.orange
+                                        )
 
-                            // Change text color based on progress percentage
-                            val textColor = when {
-                                progressPercentage < 33 -> ContextCompat.getColor(this@ListOfEntries, R.color.red) // Change to your desired color resource
-                                progressPercentage < 50 -> ContextCompat.getColor(this@ListOfEntries, R.color.orange) // Change to your desired color resource
-                                else -> ContextCompat.getColor(this@ListOfEntries, R.color.lightGreen) // Change to your desired color resource
-                            }
+                                        else -> ContextCompat.getColor(
+                                            this@ListOfEntries,
+                                            R.color.lightGreen
+                                        )
+                                    }
 
-                            progressText.setTextColor(textColor)
+                                    progressText.setTextColor(textColor)
 
-                            // Update ProgressBar with progress
-                            progressBar.progress = progress.toInt()
-                            progressText.text = "$progressPercentage%"
+                                    // Update ProgressBar with progress
+                                    progressBar.progress = progress.toInt()
+                                    progressText.text = "$progressPercentage%"
 
-// Determine color based on progress percentage
-                            val progressColor = when {
-                                progressPercentage < 33 -> R.color.red // Red for low progress
-                                progressPercentage < 50 -> R.color.orange // Yellow for medium progress
-                                else -> R.color.lightGreen // Green for high progress
-                            }
+                                    // Determine color based on progress percentage
+                                    val progressColor = when {
+                                        progressPercentage < 33 -> R.color.red
+                                        progressPercentage < 50 -> R.color.orange
+                                        else -> R.color.lightGreen
+                                    }
 
-// Set ProgressBar color
-                            val progressBarColor = ContextCompat.getColor(this@ListOfEntries, progressColor)
-                            progressBar.progressTintList = ColorStateList.valueOf(progressBarColor)
+                                    // Set ProgressBar color
+                                    val progressBarColor =
+                                        ContextCompat.getColor(this@ListOfEntries, progressColor)
+                                    progressBar.progressTintList =
+                                        ColorStateList.valueOf(progressBarColor)
+                                }
 
-
-                            //  val lightGreenColor = ContextCompat.getColor(this@ListOfEntries, R.color.lightGreen)
-                            //  progressBar.progressTintList = ColorStateList.valueOf(lightGreenColor)
+                                override fun onCancelled(databaseError: DatabaseError) {
+                                    Log.e(
+                                        "Firebase",
+                                        "Failed to check totalTimeTracked for the current day",
+                                        databaseError.toException()
+                                    )
+                                }
+                            })
                         }
-                        override fun onCancelled(databaseError: DatabaseError) {
-                            Log.e("Firebase", "Failed to check totalTimeTracked for the current day", databaseError.toException())
-                        }
-                    })
-                }
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve min and max goals", databaseError.toException())
-                }
-            })
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        Log.e(
+                            "Firebase",
+                            "Failed to retrieve min and max goals",
+                            databaseError.toException()
+                        )
+                    }
+                })
         }
     }
 
-    override fun onDestroy() {
+        override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(progressUpdateReceiver)
     }

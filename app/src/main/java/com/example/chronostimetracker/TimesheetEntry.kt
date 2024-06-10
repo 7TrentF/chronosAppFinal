@@ -139,9 +139,6 @@ class TimesheetEntry : AppCompatActivity() {
             }
         }
 
-
-
-
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.action_home -> {
@@ -208,11 +205,8 @@ class TimesheetEntry : AppCompatActivity() {
                 .show()
             return false
         }
-
         return true
     }
-
-    // Method to handle camera result
 
     // Method to check if an image is set on the ImageButton
     private fun isImageSet(imageButton: ImageButton): Boolean {
