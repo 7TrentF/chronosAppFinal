@@ -59,6 +59,15 @@
     <string name="previous">Previous</string>
 
 
+        <!-- Other strings -->
+        <string-array name="date_range_options">
+            <item>All Time</item>
+            <item>Last 7 Days</item>
+            <item>Last 30 Days</item>
+            <item>Custom Range</item>
+        </string-array>
+
+
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris

@@ -46,7 +46,7 @@ class Register : AppCompatActivity() {
         }
 
         regInfo.setOnClickListener {
-                Toast.makeText(this, "Password must be at least characters long", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Password must be at least 6 characters long", Toast.LENGTH_SHORT).show()
         }
         backLogin.setOnClickListener {
             val intent = Intent(this@Register, Login::class.java)

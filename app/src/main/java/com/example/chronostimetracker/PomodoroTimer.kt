@@ -321,13 +321,19 @@ class PomodoroTimer(private val activity: AppCompatActivity) : LifecycleObserver
         }
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    fun onAppPause() {
-        // Stop all sounds and timers when the user navigates away from the Pomodoro dialog
-        timePause()
+    fun stopAllSounds() {
         stopTickTockSound()
         stopBreakSound()
         mediaPlayer?.release()
         mediaPlayer = null
+        timeAddedMediaPlayer?.release()
+        timeAddedMediaPlayer = null
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    fun onAppPause() {
+        // Stop all sounds and timers when the user navigates away from the Pomodoro dialog
+        timePause()
+        stopAllSounds()
     }
 }

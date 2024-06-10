@@ -1,5 +1,9 @@
 package com.example.chronostimetracker
 
+import android.app.DatePickerDialog
+import android.widget.ArrayAdapter
+import android.widget.Spinner
+import android.widget.AdapterView
 import android.app.Dialog
 import android.content.Context
 import android.content.Intent
@@ -58,9 +62,13 @@ class Report : AppCompatActivity() {
     private lateinit var projectView: ConstraintLayout
     private lateinit var CategoryDisplayButton: Button
     lateinit var pieChart: PieChart
-             var selectedButton: Button? = null
-
-
+    var selectedButton: Button? = null
+    private lateinit var startDateButton: Button
+    private lateinit var endDateButton: Button
+    private lateinit var applyFilterButton: Button
+    private var startDate: String? = null
+    private var endDate: String? = null
+    private lateinit var dateRangeSpinner: Spinner
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -72,7 +80,8 @@ class Report : AppCompatActivity() {
 
         pieChart = findViewById(R.id.pieChart)
         configurePieChart()
-        fetchAndPopulateLineChart()
+        // Initial data load without filters
+        fetchAndPopulateLineChart(null, null)
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.BottomNavigationView)
         val btnProject: Button = findViewById(R.id.btnProject)
@@ -85,6 +94,15 @@ class Report : AppCompatActivity() {
         projectView = findViewById(R.id.projectContainer)
         clearButton = findViewById(R.id.clearButton)
         CategoryDisplayButton = findViewById(R.id.CategoryDisplayButton)
+
+
+
+
+        // Initialize Spinner
+        dateRangeSpinner = findViewById(R.id.dateRangeSpinner)
+        setupDateRangeSpinner()
+
+
 
         clearButton.setOnClickListener {
             viewContainer.visibility = View.GONE
@@ -154,76 +172,129 @@ class Report : AppCompatActivity() {
             displayTotalTimeTracked(database)
         }
 
-        currentUser?.let { user ->
-            val database = FirebaseDatabase.getInstance().reference
-            val userEntriesRef = database.child("user_entries").child(user.uid)
-            val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
 
-            totalTimeTrackedRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val entries = mutableListOf<Entry>()
-                    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    val dateLabels = mutableListOf<String>() // List to hold date labels
+    }
 
-                    for (dateSnapshot in dataSnapshot.children) {
-                        val date = dateSnapshot.key ?: continue
-                        val totalTime = dateSnapshot.child("Time").getValue(Long::class.java) ?: continue
 
-                        val totalHours = (totalTime / (1000 * 60 * 60)).toFloat()
-                        val totalMinutes = ((totalTime % (1000 * 60 * 60)) / (1000 * 60)).toFloat()
-                        val totalSeconds = ((totalTime % (1000 * 60)) / 1000).toFloat()
-                        val totalTimeInHours = totalHours + totalMinutes / 60 + totalSeconds / 3600
 
-                        dateLabels.add(date) // Add date to the list
-                        entries.add(Entry(dateLabels.size - 1.toFloat(), totalTimeInHours))
-                    }
+    private fun configurePieChart() {
+        pieChart.setUsePercentValues(true)
+        pieChart.description.isEnabled = false
+        pieChart.setExtraOffsets(5f, 10f, 5f, 5f)
+        pieChart.dragDecelerationFrictionCoef = 0.95f
+        pieChart.isDrawHoleEnabled = true
+        pieChart.setHoleColor(Color.WHITE)
+        pieChart.setTransparentCircleColor(Color.WHITE)
+        pieChart.setTransparentCircleAlpha(110)
+        pieChart.holeRadius = 58f
+        pieChart.transparentCircleRadius = 61f
+        pieChart.setDrawCenterText(true)
+        pieChart.rotationAngle = 0f
+        pieChart.isRotationEnabled = true
+        pieChart.setHighlightPerTapEnabled(true)
+        pieChart.animateY(1400, Easing.EaseInOutQuad)
+        pieChart.legend.isEnabled = false
+        pieChart.setEntryLabelColor(Color.WHITE)
+        pieChart.setEntryLabelTextSize(12f)
+    }
 
-                    val dailyGoalRef = userEntriesRef.child("DailyGoal")
-                    val minGoalEntries = mutableListOf<Entry>()
-                    val maxGoalEntries = mutableListOf<Entry>()
-
-                    // Retrieve daily goals
-                    dailyGoalRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                        override fun onDataChange(dailyGoalSnapshot: DataSnapshot) {
-                            for (goalSnapshot in dailyGoalSnapshot.children) {
-                                val date = goalSnapshot.key ?: continue
-                                val minGoal =
-                                    goalSnapshot.child("minGoal").getValue(Int::class.java)
-                                        ?.toFloat() ?: continue
-                                val maxGoal =
-                                    goalSnapshot.child("maxGoal").getValue(Int::class.java)
-                                        ?.toFloat() ?: continue
-
-                                val dateIndex = dateLabels.indexOf(date)
-                                if (dateIndex != -1) {
-                                    minGoalEntries.add(Entry(dateIndex.toFloat(), minGoal))
-                                    maxGoalEntries.add(Entry(dateIndex.toFloat(), maxGoal))
-                                }
-                            }
-
-                            // Update LineChart with the retrieved data
-                            updateLineChart(entries, minGoalEntries, maxGoalEntries, dateLabels)
-                        }
-
-                        override fun onCancelled(databaseError: DatabaseError) {
-                            Log.e(
-                                "Firebase",
-                                "Failed to retrieve daily goals",
-                                databaseError.toException()
-                            )
-                        }
-                    })
+    private fun retrieveCategoryTimes(database: DatabaseReference) {
+        val categoryTimesRef = database.child("CategoryTimes")
+        categoryTimesRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val categories = mutableMapOf<String, Long>()
+                for (categorySnapshot in dataSnapshot.children) {
+                    val category = categorySnapshot.key ?: ""
+                    val totalTime = categorySnapshot.child("totalTime").getValue(Long::class.java) ?: 0
+                    categories[category] = totalTime
                 }
 
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e(
-                        "Firebase",
-                        "Failed to retrieve totalTimeTracked",
-                        databaseError.toException()
-                    )
-                }
-            })
+                updatePieChart(categories)
+                displayCategoryTimes(categories)
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e("Firebase", "Failed to retrieve category times", databaseError.toException())
+            }
+        })
+    }
+
+    private fun updatePieChart(categories: Map<String, Long>) {
+        val entries = ArrayList<PieEntry>()
+        for ((category, totalTime) in categories) {
+            entries.add(PieEntry(totalTime.toFloat(), category))
         }
+
+        val colors = ArrayList<Int>()
+        val predefinedColors = listOf(
+            resources.getColor(R.color.blue),
+            resources.getColor(R.color.yellow),
+            resources.getColor(R.color.red),
+            resources.getColor(R.color.lightGreen),
+            resources.getColor(R.color.purple_200),
+            resources.getColor(R.color.veryLightYellow)
+        )
+        var colorIndex = 0
+        for (i in categories.keys.indices) {
+            colors.add(predefinedColors[colorIndex])
+            colorIndex = (colorIndex + 1) % predefinedColors.size
+        }
+
+        val dataSet = PieDataSet(entries, "Categories")
+        dataSet.setDrawIcons(false)
+        dataSet.sliceSpace = 3f
+        dataSet.iconsOffset = MPPointF(0f, 40f)
+        dataSet.selectionShift = 5f
+        dataSet.colors = colors
+
+        val data = PieData(dataSet)
+        data.setValueFormatter(PercentFormatter())
+        data.setValueTextSize(15f)
+        data.setValueTypeface(Typeface.DEFAULT_BOLD)
+        data.setValueTextColor(Color.WHITE)
+        pieChart.data = data
+        pieChart.highlightValues(null)
+        pieChart.invalidate()
+    }
+
+    private fun displayCategoryTimes(categories: Map<String, Long>) {
+        val categoryTimeList = categories.map { (category, totalTime) ->
+            val hours = TimeUnit.MILLISECONDS.toHours(totalTime)
+            val minutes = TimeUnit.MILLISECONDS.toMinutes(totalTime) % 60
+            val seconds = TimeUnit.MILLISECONDS.toSeconds(totalTime) % 60
+            val formattedTime = String.format("%02d:%02d:%02d", hours, minutes, seconds)
+            CategoryTime(category, formattedTime)
+        }
+
+        adapter = CategoryTimeAdapter(categoryTimeList)
+        recyclerView.adapter = adapter
+    }
+
+    private fun displayTotalTimeTracked(database: DatabaseReference) {
+        val totalTimeTextView = findViewById<TextView>(R.id.totalTimeTextView)
+        val totalTimeTrackedRef = database.child("totalTimeTracked")
+
+        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val totalTimeRef = totalTimeTrackedRef.child(currentDate).child("Time")
+
+
+        totalTimeRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val totalMilliseconds = dataSnapshot.getValue(Long::class.java) ?: 0
+                Log.d("Totaltime", "Total Time Tracked: $totalMilliseconds milliseconds")
+
+                val totalHours = totalMilliseconds / (1000 * 60 * 60)
+                val totalMinutes = (totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60)
+                val totalSeconds = (totalMilliseconds % (1000 * 60)) / 1000
+
+                val formattedTotalTime = String.format(Locale.getDefault(), "%02d:%02d:%02d", totalHours, totalMinutes, totalSeconds)
+                totalTimeTextView.text = "Total Time Tracked today: $formattedTotalTime"
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e("Firebase", "Failed to retrieve totalTimeTracked", databaseError.toException())
+            }
+        })
     }
 
     fun updateLineChart(
@@ -365,128 +436,59 @@ class Report : AppCompatActivity() {
         // Refresh the chart
         lineChart.invalidate()
     }
+    private fun setupDateRangeSpinner() {
+        val dateRanges = resources.getStringArray(R.array.date_range_options)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, dateRanges)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        dateRangeSpinner.adapter = adapter
 
-    private fun configurePieChart() {
-        pieChart.setUsePercentValues(true)
-        pieChart.description.isEnabled = false
-        pieChart.setExtraOffsets(5f, 10f, 5f, 5f)
-        pieChart.dragDecelerationFrictionCoef = 0.95f
-        pieChart.isDrawHoleEnabled = true
-        pieChart.setHoleColor(Color.WHITE)
-        pieChart.setTransparentCircleColor(Color.WHITE)
-        pieChart.setTransparentCircleAlpha(110)
-        pieChart.holeRadius = 58f
-        pieChart.transparentCircleRadius = 61f
-        pieChart.setDrawCenterText(true)
-        pieChart.rotationAngle = 0f
-        pieChart.isRotationEnabled = true
-        pieChart.setHighlightPerTapEnabled(true)
-        pieChart.animateY(1400, Easing.EaseInOutQuad)
-        pieChart.legend.isEnabled = false
-        pieChart.setEntryLabelColor(Color.WHITE)
-        pieChart.setEntryLabelTextSize(12f)
-    }
-
-    private fun retrieveCategoryTimes(database: DatabaseReference) {
-        val categoryTimesRef = database.child("CategoryTimes")
-        categoryTimesRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val categories = mutableMapOf<String, Long>()
-                for (categorySnapshot in dataSnapshot.children) {
-                    val category = categorySnapshot.key ?: ""
-                    val totalTime = categorySnapshot.child("totalTime").getValue(Long::class.java) ?: 0
-                    categories[category] = totalTime
+        dateRangeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                when (position) {
+                    0 -> fetchAndPopulateLineChart(null, null) // All Time
+                    1 -> { // Last 7 Days
+                        val calendar = Calendar.getInstance()
+                        endDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+                        calendar.add(Calendar.DAY_OF_YEAR, -7)
+                        startDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+                        fetchAndPopulateLineChart(startDate, endDate)
+                    }
+                    2 -> { // Last 30 Days
+                        val calendar = Calendar.getInstance()
+                        endDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+                        calendar.add(Calendar.DAY_OF_YEAR, -30)
+                        startDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+                        fetchAndPopulateLineChart(startDate, endDate)
+                    }
+                    3 -> openCustomDateRangePicker() // Custom Range
                 }
-
-                updatePieChart(categories)
-                displayCategoryTimes(categories)
             }
 
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.e("Firebase", "Failed to retrieve category times", databaseError.toException())
-            }
-        })
-    }
-
-    private fun updatePieChart(categories: Map<String, Long>) {
-        val entries = ArrayList<PieEntry>()
-        for ((category, totalTime) in categories) {
-            entries.add(PieEntry(totalTime.toFloat(), category))
+            override fun onNothingSelected(parent: AdapterView<*>) {}
         }
-
-        val colors = ArrayList<Int>()
-        val predefinedColors = listOf(
-            resources.getColor(R.color.blue),
-            resources.getColor(R.color.yellow),
-            resources.getColor(R.color.red),
-            resources.getColor(R.color.lightGreen),
-            resources.getColor(R.color.purple_200),
-            resources.getColor(R.color.veryLightYellow)
-        )
-        var colorIndex = 0
-        for (i in categories.keys.indices) {
-            colors.add(predefinedColors[colorIndex])
-            colorIndex = (colorIndex + 1) % predefinedColors.size
-        }
-
-        val dataSet = PieDataSet(entries, "Categories")
-        dataSet.setDrawIcons(false)
-        dataSet.sliceSpace = 3f
-        dataSet.iconsOffset = MPPointF(0f, 40f)
-        dataSet.selectionShift = 5f
-        dataSet.colors = colors
-
-        val data = PieData(dataSet)
-        data.setValueFormatter(PercentFormatter())
-        data.setValueTextSize(15f)
-        data.setValueTypeface(Typeface.DEFAULT_BOLD)
-        data.setValueTextColor(Color.WHITE)
-        pieChart.data = data
-        pieChart.highlightValues(null)
-        pieChart.invalidate()
     }
 
-    private fun displayCategoryTimes(categories: Map<String, Long>) {
-        val categoryTimeList = categories.map { (category, totalTime) ->
-            val hours = TimeUnit.MILLISECONDS.toHours(totalTime)
-            val minutes = TimeUnit.MILLISECONDS.toMinutes(totalTime) % 60
-            val seconds = TimeUnit.MILLISECONDS.toSeconds(totalTime) % 60
-            val formattedTime = String.format("%02d:%02d:%02d", hours, minutes, seconds)
-            CategoryTime(category, formattedTime)
-        }
+    private fun openCustomDateRangePicker() {
+        // Implement custom date range picker logic here
+        // Use DatePickerDialog or any other date picker method to select start and end dates
+        // Then call fetchAndPopulateLineChart(startDate, endDate)
+        val calendar = Calendar.getInstance()
+        val year = calendar.get(Calendar.YEAR)
+        val month = calendar.get(Calendar.MONTH)
+        val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-        adapter = CategoryTimeAdapter(categoryTimeList)
-        recyclerView.adapter = adapter
+        val startDatePicker = DatePickerDialog(this, { _, startYear, startMonth, startDay ->
+            startDate = String.format("%04d-%02d-%02d", startYear, startMonth + 1, startDay)
+            val endDatePicker = DatePickerDialog(this, { _, endYear, endMonth, endDay ->
+                endDate = String.format("%04d-%02d-%02d", endYear, endMonth + 1, endDay)
+                fetchAndPopulateLineChart(startDate, endDate)
+            }, year, month, day)
+            endDatePicker.show()
+        }, year, month, day)
+        startDatePicker.show()
     }
 
-    private fun displayTotalTimeTracked(database: DatabaseReference) {
-        val totalTimeTextView = findViewById<TextView>(R.id.totalTimeTextView)
-        val totalTimeTrackedRef = database.child("totalTimeTracked")
-
-        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val totalTimeRef = totalTimeTrackedRef.child(currentDate).child("Time")
-
-
-        totalTimeRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                val totalMilliseconds = dataSnapshot.getValue(Long::class.java) ?: 0
-                Log.d("Totaltime", "Total Time Tracked: $totalMilliseconds milliseconds")
-
-                val totalHours = totalMilliseconds / (1000 * 60 * 60)
-                val totalMinutes = (totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60)
-                val totalSeconds = (totalMilliseconds % (1000 * 60)) / 1000
-
-                val formattedTotalTime = String.format(Locale.getDefault(), "%02d:%02d:%02d", totalHours, totalMinutes, totalSeconds)
-                totalTimeTextView.text = "Total Time Tracked today: $formattedTotalTime"
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.e("Firebase", "Failed to retrieve totalTimeTracked", databaseError.toException())
-            }
-        })
-    }
-
-    private fun fetchAndPopulateLineChart() {
+    private fun fetchAndPopulateLineChart(startDate: String?, endDate: String?) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->
             val database = FirebaseDatabase.getInstance().reference
@@ -497,36 +499,33 @@ class Report : AppCompatActivity() {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     val entries = mutableListOf<Entry>()
                     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                    val dateLabels = mutableListOf<String>() // List to hold date labels
+                    val dateLabels = mutableListOf<String>()
 
                     for (dateSnapshot in dataSnapshot.children) {
                         val date = dateSnapshot.key ?: continue
                         val totalTime = dateSnapshot.child("Time").getValue(Long::class.java) ?: continue
 
-                        val totalHours = (totalTime / (1000 * 60 * 60)).toFloat()
-                        val totalMinutes = ((totalTime % (1000 * 60 * 60)) / (1000 * 60)).toFloat()
-                        val totalSeconds = ((totalTime % (1000 * 60)) / 1000).toFloat()
-                        val totalTimeInHours = totalHours + totalMinutes / 60 + totalSeconds / 3600
+                        if (isDateInRange(date, startDate, endDate)) {
+                            val totalHours = (totalTime / (1000 * 60 * 60)).toFloat()
+                            val totalMinutes = ((totalTime % (1000 * 60 * 60)) / (1000 * 60)).toFloat()
+                            val totalSeconds = ((totalTime % (1000 * 60)) / 1000).toFloat()
+                            val totalTimeInHours = totalHours + totalMinutes / 60 + totalSeconds / 3600
 
-                        dateLabels.add(date) // Add date to the list
-                        entries.add(Entry(dateLabels.size - 1.toFloat(), totalTimeInHours))
+                            dateLabels.add(date)
+                            entries.add(Entry(dateLabels.size - 1.toFloat(), totalTimeInHours))
+                        }
                     }
 
                     val dailyGoalRef = userEntriesRef.child("DailyGoal")
                     val minGoalEntries = mutableListOf<Entry>()
                     val maxGoalEntries = mutableListOf<Entry>()
 
-                    // Retrieve daily goals
                     dailyGoalRef.addListenerForSingleValueEvent(object : ValueEventListener {
                         override fun onDataChange(dailyGoalSnapshot: DataSnapshot) {
                             for (goalSnapshot in dailyGoalSnapshot.children) {
                                 val date = goalSnapshot.key ?: continue
-                                val minGoal =
-                                    goalSnapshot.child("minGoal").getValue(Int::class.java)
-                                        ?.toFloat() ?: continue
-                                val maxGoal =
-                                    goalSnapshot.child("maxGoal").getValue(Int::class.java)
-                                        ?.toFloat() ?: continue
+                                val minGoal = goalSnapshot.child("minGoal").getValue(Int::class.java)?.toFloat() ?: continue
+                                val maxGoal = goalSnapshot.child("maxGoal").getValue(Int::class.java)?.toFloat() ?: continue
 
                                 val dateIndex = dateLabels.indexOf(date)
                                 if (dateIndex != -1) {
@@ -535,33 +534,33 @@ class Report : AppCompatActivity() {
                                 }
                             }
 
-                            // Update LineChart with the retrieved data
                             updateLineChart(entries, minGoalEntries, maxGoalEntries, dateLabels)
                         }
 
                         override fun onCancelled(databaseError: DatabaseError) {
-                            Log.e(
-                                "Firebase",
-                                "Failed to retrieve daily goals",
-                                databaseError.toException()
-                            )
+                            Log.e("Firebase", "Failed to retrieve daily goals", databaseError.toException())
                         }
                     })
                 }
 
                 override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e(
-                        "Firebase",
-                        "Failed to retrieve totalTimeTracked",
-                        databaseError.toException()
-                    )
+                    Log.e("Firebase", "Failed to retrieve totalTimeTracked", databaseError.toException())
                 }
             })
         }
     }
 
+    private fun isDateInRange(date: String, startDate: String?, endDate: String?): Boolean {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dateObj = dateFormat.parse(date)
+        val startDateObj = startDate?.let { dateFormat.parse(it) }
+        val endDateObj = endDate?.let { dateFormat.parse(it) }
 
-    // Function to convert date string to a numeric representation (e.g., number of days since a reference date)
+        return (startDateObj == null || !dateObj.before(startDateObj)) &&
+                (endDateObj == null || !dateObj.after(endDateObj))
+    }
+
+
 
 
 }

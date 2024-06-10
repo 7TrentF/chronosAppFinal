@@ -67,8 +67,8 @@
                     android:layout_marginTop="16dp"
                     android:background="@drawable/black_border"
                     android:text="Category"
-                    android:textStyle="bold"
                     android:textColor="@color/white"
+                    android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.941"
                     app:layout_constraintStart_toStartOf="parent"
@@ -81,8 +81,8 @@
                     android:layout_marginTop="16dp"
                     android:background="@drawable/black_border"
                     android:text="Project"
-                    android:textStyle="bold"
                     android:textColor="@color/white"
+                    android:textStyle="bold"
                     app:layout_constraintEnd_toStartOf="@+id/CategoryDisplayButton"
                     app:layout_constraintHorizontal_bias="0.806"
                     app:layout_constraintStart_toStartOf="parent"
@@ -104,6 +104,8 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
 
+
+
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
 
@@ -120,7 +122,7 @@
                 android:id="@+id/viewContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="visible"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -247,15 +249,29 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/my_toolbar"
-            android:visibility="gone"
+            android:visibility="visible"
             tools:layout_editor_absoluteX="0dp"
             tools:layout_editor_absoluteY="0dp">
 
+
             <!-- Your other views -->
+            <Spinner
+                android:id="@+id/dateRangeSpinner"
+                android:layout_width="155dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@color/white"
+                app:layout_constraintBottom_toTopOf="@+id/line_chart_container"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="1.0" />
+
             <FrameLayout
                 android:id="@+id/line_chart_container"
-                android:layout_width="402dp"
-                android:layout_height="481dp"
+                android:layout_width="407dp"
+                android:layout_height="395dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -264,8 +280,8 @@
 
                 <com.github.mikephil.charting.charts.LineChart
                     android:id="@+id/lineChart"
-                    android:layout_width="match_parent"
-                    android:layout_height="499dp" />
+                    android:layout_width="409dp"
+                    android:layout_height="394dp" />
 
             </FrameLayout>
 

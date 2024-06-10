@@ -74,11 +74,11 @@ class ListOfEntries : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-            progressBar = findViewById(R.id.progressBar)
-            progressText = findViewById(R.id.progressText)
+        progressBar = findViewById(R.id.progressBar)
+        progressText = findViewById(R.id.progressText)
 
-            // Register the broadcast receiver
-            registerReceiver(progressUpdateReceiver, IntentFilter("com.example.UPDATE_PROGRESS"))
+        // Register the broadcast receiver
+        registerReceiver(progressUpdateReceiver, IntentFilter("com.example.UPDATE_PROGRESS"))
 
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.BottomNavigationView)
@@ -111,7 +111,7 @@ class ListOfEntries : AppCompatActivity() {
         // Retrieve entries from Firebase
         retrieveEntriesFromFirebase()
 
-    // Set up the RecyclerView with the adapter
+        // Set up the RecyclerView with the adapter
         adapter = TimesheetEntryAdapter(entries)
         recyclerView.adapter = adapter
 
@@ -277,8 +277,8 @@ class ListOfEntries : AppCompatActivity() {
                             progressBar.progressTintList = ColorStateList.valueOf(progressBarColor)
 
 
-                          //  val lightGreenColor = ContextCompat.getColor(this@ListOfEntries, R.color.lightGreen)
-                          //  progressBar.progressTintList = ColorStateList.valueOf(lightGreenColor)
+                            //  val lightGreenColor = ContextCompat.getColor(this@ListOfEntries, R.color.lightGreen)
+                            //  progressBar.progressTintList = ColorStateList.valueOf(lightGreenColor)
                         }
                         override fun onCancelled(databaseError: DatabaseError) {
                             Log.e("Firebase", "Failed to check totalTimeTracked for the current day", databaseError.toException())
@@ -436,102 +436,102 @@ class ListOfEntries : AppCompatActivity() {
             val timesheetRef = database.child("Timesheet Entries") // Reference to the timesheetEntries child
             val categoryRef = database.child("categoryData") // Reference to the categoryData child
 
-        // Initialize Spinner
-        val spinner: Spinner = findViewById(R.id.categorySpinner)
+            // Initialize Spinner
+            val spinner: Spinner = findViewById(R.id.categorySpinner)
 
-        // Mutable list to hold the filter options
-        val mutableFilterOptions =
-            mutableListOf("None", "Filter by Categories", "Filter by Date Range")
+            // Mutable list to hold the filter options
+            val mutableFilterOptions =
+                mutableListOf("None", "Filter by Categories", "Filter by Date Range")
 
-        // Pass the mutable list to the ArrayAdapter
-        val spinnerArrayAdapter = ArrayAdapter<String>(
-            this@ListOfEntries,
-            R.layout.spinner_dropdown_item,
-            mutableFilterOptions
-        )
-        spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = spinnerArrayAdapter
+            // Pass the mutable list to the ArrayAdapter
+            val spinnerArrayAdapter = ArrayAdapter<String>(
+                this@ListOfEntries,
+                R.layout.spinner_dropdown_item,
+                mutableFilterOptions
+            )
+            spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinner.adapter = spinnerArrayAdapter
 
-        spinner.setSelection(0, false)
+            spinner.setSelection(0, false)
 
-        // Set the onItemSelectedListener for the Spinner
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View,
-                position: Int,
-                id: Long
-            ) {
-                val selectedOption = parent.getItemAtPosition(position).toString()
-                when (selectedOption) {
-                    "Filter by Categories" -> {
-                        showCategorySelectionDialog()
-                    }
-                    "Filter by Date Range" -> {
+            // Set the onItemSelectedListener for the Spinner
+            spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>,
+                    view: View,
+                    position: Int,
+                    id: Long
+                ) {
+                    val selectedOption = parent.getItemAtPosition(position).toString()
+                    when (selectedOption) {
+                        "Filter by Categories" -> {
+                            showCategorySelectionDialog()
+                        }
+                        "Filter by Date Range" -> {
 
-                        // If "Filter by Date Range" is selected, show two DatePickerDialogs
+                            // If "Filter by Date Range" is selected, show two DatePickerDialogs
 
-                        val calendar = Calendar.getInstance()
-                        val year = calendar.get(Calendar.YEAR)
-                        val month = calendar.get(Calendar.MONTH)
-                        val day = calendar.get(Calendar.DAY_OF_MONTH)
+                            val calendar = Calendar.getInstance()
+                            val year = calendar.get(Calendar.YEAR)
+                            val month = calendar.get(Calendar.MONTH)
+                            val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-                        // Show the first DatePickerDialog for the start date
-                        DatePickerDialog(this@ListOfEntries, { _, year, monthOfYear, dayOfMonth ->
-                            // Store the selected start date
-                            val startDate = "$dayOfMonth/${monthOfYear + 1}/$year"
-
-                            // Show the second DatePickerDialog for the end date
+                            // Show the first DatePickerDialog for the start date
                             DatePickerDialog(this@ListOfEntries, { _, year, monthOfYear, dayOfMonth ->
-                                // Handle the end date selected by the user
-                                val endDate = "$dayOfMonth/${monthOfYear + 1}/$year"
-                                filterEntriesByDate(startDate, endDate)
+                                // Store the selected start date
+                                val startDate = "$dayOfMonth/${monthOfYear + 1}/$year"
+
+                                // Show the second DatePickerDialog for the end date
+                                DatePickerDialog(this@ListOfEntries, { _, year, monthOfYear, dayOfMonth ->
+                                    // Handle the end date selected by the user
+                                    val endDate = "$dayOfMonth/${monthOfYear + 1}/$year"
+                                    filterEntriesByDate(startDate, endDate)
+                                }, year, month, day).show()
+
                             }, year, month, day).show()
 
-                        }, year, month, day).show()
-
-                    }
-                    "None" -> {
-                        // Clear all filters and update the UI
-                        adapter.updateData(entries)
+                        }
+                        "None" -> {
+                            // Clear all filters and update the UI
+                            adapter.updateData(entries)
+                        }
                     }
                 }
+
+                override fun onNothingSelected(parent: AdapterView<*>) {
+                }
             }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {
-            }
-        }
-                // Retrieve all saved categories from Firebase
-                categoryRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                    override fun onDataChange(categoryDataSnapshot: DataSnapshot) {
-                        val categoryNamesStringList = mutableListOf<String>()
-                        for (categorySnapshot in categoryDataSnapshot.children) {
-                            val categoryName =
-                                categorySnapshot.child("category_name").getValue(String::class.java)
-                            categoryName?.let { categoryNamesStringList.add(it) }
-                        }
-
-                        // Remove duplicates from the list of category names
-                        val uniqueCategoryNames = categoryNamesStringList.distinct()
-
-                        // Add categories to the filter options
-                        mutableFilterOptions.addAll(uniqueCategoryNames)
-
-                        // Update the ArrayAdapter with the new filter options
-                        spinnerArrayAdapter.notifyDataSetChanged()
+            // Retrieve all saved categories from Firebase
+            categoryRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(categoryDataSnapshot: DataSnapshot) {
+                    val categoryNamesStringList = mutableListOf<String>()
+                    for (categorySnapshot in categoryDataSnapshot.children) {
+                        val categoryName =
+                            categorySnapshot.child("category_name").getValue(String::class.java)
+                        categoryName?.let { categoryNamesStringList.add(it) }
                     }
 
-                        override fun onCancelled(databaseError: DatabaseError) {
-                            Log.e(
-                                "Firebase",
-                                "Failed to retrieve category names",
-                                databaseError.toException()
-                            )
-                        }
+                    // Remove duplicates from the list of category names
+                    val uniqueCategoryNames = categoryNamesStringList.distinct()
 
-                })
+                    // Add categories to the filter options
+                    mutableFilterOptions.addAll(uniqueCategoryNames)
+
+                    // Update the ArrayAdapter with the new filter options
+                    spinnerArrayAdapter.notifyDataSetChanged()
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e(
+                        "Firebase",
+                        "Failed to retrieve category names",
+                        databaseError.toException()
+                    )
+                }
+
+            })
         }
-        }
+    }
 
     private fun showCategorySelectionDialog() {
         val currentUser = FirebaseAuth.getInstance().currentUser
