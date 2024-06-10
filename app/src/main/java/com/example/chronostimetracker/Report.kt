@@ -50,16 +50,16 @@ import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
 class Report : AppCompatActivity() {
-    lateinit var pieChart: PieChart
-    private val viewsToRemove = mutableListOf<View>()
+
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: CategoryTimeAdapter
     private lateinit var clearButton: ImageButton
     private lateinit var viewContainer: ConstraintLayout
     private lateinit var projectView: ConstraintLayout
-    var selectedButton: Button? = null
-
     private lateinit var CategoryDisplayButton: Button
+    lateinit var pieChart: PieChart
+             var selectedButton: Button? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,9 +71,7 @@ class Report : AppCompatActivity() {
         supportActionBar?.title = "Reports"
 
         pieChart = findViewById(R.id.pieChart)
-        // configurePieChart()
-        //setupLineChart()
-
+        configurePieChart()
         fetchAndPopulateLineChart()
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.BottomNavigationView)
@@ -232,8 +230,9 @@ class Report : AppCompatActivity() {
         entries: List<Entry>,
         minGoalEntries: List<Entry>,
         maxGoalEntries: List<Entry>,
-        dateLabels: List<String> // List of date labels corresponding to the total time tracked
-    ) {
+        // List of date labels corresponding to the total time tracked
+        dateLabels: List<String> )
+    {
         val lineChart = findViewById<LineChart>(R.id.lineChart)
 
         val lineDataSet = LineDataSet(entries, "Total Time Tracked")
@@ -488,66 +487,74 @@ class Report : AppCompatActivity() {
     }
 
     private fun fetchAndPopulateLineChart() {
-        val database = FirebaseDatabase.getInstance().reference
         val currentUser = FirebaseAuth.getInstance().currentUser
-        val lineChart = findViewById<LineChart>(R.id.lineChart)
-
         currentUser?.let { user ->
+            val database = FirebaseDatabase.getInstance().reference
             val userEntriesRef = database.child("user_entries").child(user.uid)
-
-            // Fetch Daily Goals
-            val dailyGoalRef = userEntriesRef.child("DailyGoal")
-            dailyGoalRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val entries = mutableListOf<Entry>()
-                    for (snapshot in dataSnapshot.children) {
-                        val dailyGoal = snapshot.getValue(DailyGoal::class.java)
-                        dailyGoal?.let {
-                            val minGoal = dailyGoal.minGoal.toFloat()
-                            val maxGoal = dailyGoal.maxGoal.toFloat()
-                            val date = snapshot.key ?: ""
-                            val numericDate = convertDateStringToNumeric(date)
-                            entries.add(Entry(numericDate.toFloat(), minGoal))
-                            entries.add(Entry(numericDate.toFloat(), maxGoal))
-                        }
-                    }
-                    // Populate LineChart
-                    val dataSet = LineDataSet(entries, "Min/Max Goals")
-                    dataSet.color = Color.WHITE
-                    dataSet.valueTextColor = Color.WHITE
-                    val lineData = LineData(dataSet)
-                    lineChart.data = lineData
-                    lineChart.invalidate()
-                }
-
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve daily goals", databaseError.toException())
-                }
-            })
-
-            // Fetch Total Time Tracked
             val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
+
             totalTimeTrackedRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     val entries = mutableListOf<Entry>()
-                    for (snapshot in dataSnapshot.children) {
-                        val totalMilliseconds = snapshot.child("Time").getValue(Long::class.java) ?: 0
-                        val totalHours = totalMilliseconds / (1000 * 60 * 60)
-                        val date = snapshot.key ?: ""
-                        val numericDate = convertDateStringToNumeric(date)
-                        entries.add(Entry(numericDate.toFloat(), totalHours.toFloat()))
+                    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val dateLabels = mutableListOf<String>() // List to hold date labels
+
+                    for (dateSnapshot in dataSnapshot.children) {
+                        val date = dateSnapshot.key ?: continue
+                        val totalTime = dateSnapshot.child("Time").getValue(Long::class.java) ?: continue
+
+                        val totalHours = (totalTime / (1000 * 60 * 60)).toFloat()
+                        val totalMinutes = ((totalTime % (1000 * 60 * 60)) / (1000 * 60)).toFloat()
+                        val totalSeconds = ((totalTime % (1000 * 60)) / 1000).toFloat()
+                        val totalTimeInHours = totalHours + totalMinutes / 60 + totalSeconds / 3600
+
+                        dateLabels.add(date) // Add date to the list
+                        entries.add(Entry(dateLabels.size - 1.toFloat(), totalTimeInHours))
                     }
-                    // Populate LineChart
-                    val dataSet = LineDataSet(entries, "Total Time Tracked")
-                    dataSet.color = Color.RED // Set color for total time tracked
-                    dataSet.valueTextColor = Color.RED
-                    val lineData = LineData(dataSet)
-                    lineChart.data = lineData
-                    lineChart.invalidate()
+
+                    val dailyGoalRef = userEntriesRef.child("DailyGoal")
+                    val minGoalEntries = mutableListOf<Entry>()
+                    val maxGoalEntries = mutableListOf<Entry>()
+
+                    // Retrieve daily goals
+                    dailyGoalRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(dailyGoalSnapshot: DataSnapshot) {
+                            for (goalSnapshot in dailyGoalSnapshot.children) {
+                                val date = goalSnapshot.key ?: continue
+                                val minGoal =
+                                    goalSnapshot.child("minGoal").getValue(Int::class.java)
+                                        ?.toFloat() ?: continue
+                                val maxGoal =
+                                    goalSnapshot.child("maxGoal").getValue(Int::class.java)
+                                        ?.toFloat() ?: continue
+
+                                val dateIndex = dateLabels.indexOf(date)
+                                if (dateIndex != -1) {
+                                    minGoalEntries.add(Entry(dateIndex.toFloat(), minGoal))
+                                    maxGoalEntries.add(Entry(dateIndex.toFloat(), maxGoal))
+                                }
+                            }
+
+                            // Update LineChart with the retrieved data
+                            updateLineChart(entries, minGoalEntries, maxGoalEntries, dateLabels)
+                        }
+
+                        override fun onCancelled(databaseError: DatabaseError) {
+                            Log.e(
+                                "Firebase",
+                                "Failed to retrieve daily goals",
+                                databaseError.toException()
+                            )
+                        }
+                    })
                 }
 
                 override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve total time tracked", databaseError.toException())
+                    Log.e(
+                        "Firebase",
+                        "Failed to retrieve totalTimeTracked",
+                        databaseError.toException()
+                    )
                 }
             })
         }
@@ -555,14 +562,6 @@ class Report : AppCompatActivity() {
 
 
     // Function to convert date string to a numeric representation (e.g., number of days since a reference date)
-    private fun convertDateStringToNumeric(dateString: String): Long {
 
-        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val date = sdf.parse(dateString)
-        val referenceDate = sdf.parse("2024-01-01") // Use your reference date
-        val diffInMillis = date.time - referenceDate.time
-        // Convert milliseconds to days
-        return TimeUnit.MILLISECONDS.toDays(diffInMillis)
-    }
 
 }

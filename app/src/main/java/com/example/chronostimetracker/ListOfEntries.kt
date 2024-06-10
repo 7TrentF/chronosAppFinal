@@ -55,13 +55,6 @@ class ListOfEntries : AppCompatActivity() {
     private lateinit var navigationView: NavigationView
     private lateinit var adapter: TimesheetEntryAdapter
     private lateinit var entries: MutableList<TimesheetData>
-    private lateinit var camera: Camera
-    private lateinit var timerTextView: TextView
-    private var timerHandler: Handler? = null
-    private var timerRunnable: Runnable? = null
-    private var startTime: Long = 0
-    private var isTimerRunning = false
-    private lateinit var currentUser: FirebaseUser
     private lateinit var progressBar: ProgressBar
     private lateinit var minGoalText: TextView
     private lateinit var maxGoalText: TextView
@@ -81,18 +74,11 @@ class ListOfEntries : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
-
             progressBar = findViewById(R.id.progressBar)
             progressText = findViewById(R.id.progressText)
 
             // Register the broadcast receiver
             registerReceiver(progressUpdateReceiver, IntentFilter("com.example.UPDATE_PROGRESS"))
-
-
-
-
-
 
 
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.BottomNavigationView)
@@ -192,9 +178,6 @@ class ListOfEntries : AppCompatActivity() {
             }
         }
 
-
-
-
         bottomNavigationView.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.action_add -> {
@@ -227,9 +210,6 @@ class ListOfEntries : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-
-
 
         val database = FirebaseDatabase.getInstance().reference
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
@@ -312,7 +292,6 @@ class ListOfEntries : AppCompatActivity() {
         }
     }
 
-
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(progressUpdateReceiver)
@@ -326,10 +305,6 @@ class ListOfEntries : AppCompatActivity() {
             checkDailyGoalSet()
         }
     }
-
-
-
-
 
 
     private fun updateProgressBarAndTextViews() {
@@ -453,12 +428,6 @@ class ListOfEntries : AppCompatActivity() {
     }
 
 
-
-
-
-
-
-
     private fun populateCategorySpinner() {
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->
@@ -532,8 +501,6 @@ class ListOfEntries : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>) {
             }
         }
-
-
                 // Retrieve all saved categories from Firebase
                 categoryRef.addListenerForSingleValueEvent(object : ValueEventListener {
                     override fun onDataChange(categoryDataSnapshot: DataSnapshot) {
@@ -565,7 +532,6 @@ class ListOfEntries : AppCompatActivity() {
                 })
         }
         }
-
 
     private fun showCategorySelectionDialog() {
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -606,9 +572,6 @@ class ListOfEntries : AppCompatActivity() {
             })
         }
     }
-
-
-
 
 
     private fun filterEntriesByCategory(selectedCategory: String?) {
@@ -656,26 +619,6 @@ class ListOfEntries : AppCompatActivity() {
     }
 
 
-
-
-
-    private fun parseCreationTime(creationTime: Long): Date? {
-        return try {
-            Date(creationTime)
-        } catch (e: IllegalArgumentException) {
-            null // Return null if the creationTime cannot be converted to a Date
-        }
-    }
-
-    // Function to parse date
-    private fun parseDate(dateString: String): Date? {
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        return try {
-            dateFormat.parse(dateString)
-        } catch (e: ParseException) {
-            null
-        }
-    }
 
     private fun groupEntriesByDate(entries: List<TimesheetData>): Map<String, List<TimesheetData>> {
         val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())

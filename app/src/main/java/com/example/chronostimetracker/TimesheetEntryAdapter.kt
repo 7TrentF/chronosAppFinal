@@ -37,21 +37,12 @@ import java.util.Timer
 import java.util.concurrent.TimeUnit
 
 class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : RecyclerView.Adapter<TimesheetEntryAdapter.ViewHolder>() {
-    private lateinit var camera: Camera
-    private var timer: Timer? = null
-    private var elapsedTime: Long = 0
-    private val timerStates = mutableMapOf<Int, Boolean>()
-    private val timerStartTimes = mutableMapOf<Int, Long>() // Map to track timer start times
-    private var timerHandler: Handler? = null // Declare timerHandler
-    private var timerRunnable: Runnable? = null // Declare timerRunnable
+
     private val categoryTotalTime = mutableMapOf<String, Long>()
     private var database: DatabaseReference
-    private var initialTotal: Long = 0
-
     init {
         // Initialize Firebase Database reference
         database = FirebaseDatabase.getInstance().reference
-
     }
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val uniqueIdTextView: TextView = itemView.findViewById(R.id.uniqueIdTextView)
@@ -61,10 +52,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         val timerButton: Button = itemView.findViewById(R.id.timerButton)
         val timerTextView: TextView = itemView.findViewById(R.id.timerTextView)
         val TimesheetDate: TextView = itemView.findViewById(R.id.topTextView)
-
-        val currentUser = FirebaseAuth.getInstance().currentUser // Fetch the currently logged-in user
     }
-
     @SuppressLint("NotifyDataSetChanged")
     fun updateData(newEntries: List<TimesheetData>) {
         this.entries = newEntries
@@ -75,7 +63,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         val view = LayoutInflater.from(parent.context).inflate(R.layout.timesheet_entry_card, parent, false)
         return ViewHolder(view)
     }
-
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val entry = entries[position]
@@ -115,7 +102,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
             holder.imageView.setImageResource(R.drawable.default_image) // Default image if none is present
 
         }
-
 
         val currentUser = FirebaseAuth.getInstance().currentUser
         currentUser?.let { user ->
@@ -173,50 +159,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         }
     }
 
-
-    fun getDailyData(currentDate: String, userId: String, callback: (DailyGoal, Long) -> Unit) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        val database = FirebaseDatabase.getInstance().reference
-
-
-        currentUser?.let { user ->
-
-            val userEntriesRef = database.child("user_entries").child(user.uid)
-            val totalTimeTrackedRef = userEntriesRef.child("totalTimeTracked")
-            val dailyGoalRef = userEntriesRef.child("DailyGoal")
-
-            dailyGoalRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val dailyGoal = snapshot.getValue(DailyGoal::class.java) ?: DailyGoal()
-
-                    totalTimeTrackedRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            val totalTimeTracked = snapshot.getValue(Long::class.java) ?: 0L
-                            callback(dailyGoal, totalTimeTracked)
-                        }
-
-                        override fun onCancelled(error: DatabaseError) {
-                            Log.e(
-                                "Firebase",
-                                "Failed to retrieve totalTimeTracked",
-                                error.toException()
-                            )
-                        }
-                    })
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("Firebase", "Failed to retrieve daily goal", error.toException())
-                }
-            })
-        }
-    }
-
-
-
-
-
-
     private fun showBottomSheetDialog(context: Context, entry: TimesheetData) {
         val editHandler = TimesheetEdit(context, database)
         editHandler.showEditDialog(entry,
@@ -246,8 +188,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         )
     }
 
-
-
     fun showTimerDialog(context: Context,  entry: TimesheetData, position: Int) {
         val currentUser = FirebaseAuth.getInstance().currentUser
 
@@ -261,9 +201,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
             val stopButton = dialog.findViewById<ImageButton>(R.id.stopButton)
             val timerProjectName = dialog.findViewById<TextView>(R.id.projectTextView)
             val timerDescription= dialog.findViewById<TextView>(R.id.descriptionTextView)
-
-
-
             var startTime: Long = System.currentTimeMillis() // Start the timer immediately
             var isTimerRunning = true // Timer is running by default
 
@@ -402,7 +339,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
                 }
             }
 
-
             dialog.show()
 
             // Set dialog position to bottom of the screen
@@ -413,9 +349,7 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         }
     }
 
-
-
-            private fun saveCategoryTotalTimes(context: Context) {
+    private fun saveCategoryTotalTimes(context: Context) {
         // Get the current authenticated user
         val currentUser = FirebaseAuth.getInstance().currentUser
 
@@ -444,20 +378,6 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
         }
     }
 
-
-
-    private fun showAlert(context: Context, message: String) {
-        android.app.AlertDialog.Builder(context)
-            .setTitle("Start Timesheet Entry")
-            .setMessage(message)
-            .setPositiveButton("OK") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
-    }
-
-
-
     private fun formatElapsedTime(elapsedTime: Long): String {
         val hours = TimeUnit.MILLISECONDS.toHours(elapsedTime)
         val minutes = TimeUnit.MILLISECONDS.toMinutes(elapsedTime) % 60
@@ -466,6 +386,5 @@ class TimesheetEntryAdapter(private var entries: List<TimesheetData>) : Recycler
     }
 
     override fun getItemCount() = entries.size
-
 
 }
